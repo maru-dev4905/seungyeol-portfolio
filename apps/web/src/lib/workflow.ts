@@ -44,70 +44,225 @@ export const principles: readonly Principle[] = [
 ];
 
 // ---------- 2. 역할 · 메모리 · 모드 ----------
-export type Role = { name: string; runsAs: string; duty: string };
+// 조직도(RolesOrgChart)의 한 노드. parent로 트리를 만든다(null = 최상단). 글은 기존 역할 표의 내용을 한 줄 책임·핵심 제약으로 나눠 담았다.
+// avatar: 캐릭터 그림 종류(RoleAvatar가 그린다). side: 보고 줄기 바깥의 옆 가지(외부 리뷰어·자동화). gate: 사람 승인이 필요한 연결선에 붙는 표시
+export type AvatarKind = "human" | "orchestrator" | "implementer" | "verifier" | "reviewer" | "automation";
+
+export type Role = {
+  id: string;
+  parent: string | null;
+  avatar: AvatarKind;
+  name: string;
+  runsAs: string; // 실행 주체
+  summary: string; // 한 줄 책임
+  constraint: string; // 핵심 제약 한 줄
+  side?: boolean;
+  gate?: string;
+};
 
 export const roles: readonly Role[] = [
   {
+    id: "owner",
+    parent: null,
+    avatar: "human",
+    name: "Owner",
+    runsAs: "저(사람)",
+    summary: "중요한 계획을 승인하고, 비교안 중 하나를 고르고, 실기기를 확인하고, merge합니다.",
+    constraint: "제품 범위·보안·데이터·merge·배포는 사람만 결정합니다.",
+  },
+  {
+    id: "orchestrator",
+    parent: "owner",
+    avatar: "orchestrator",
     name: "Orchestrator",
     runsAs: "메인 Claude 세션",
-    duty: "메모리 파일을 읽고, 다음 작업을 고르고, 계획을 세우고, 구현자·검증자 세션을 시작하고 닫습니다. 상태 파일을 갱신하고 사람에게 승인을 요청합니다. 작업 코드 맥락은 들고 있지 않고 상태는 파일에 둡니다.",
+    summary: "메모리 파일을 읽고 다음 작업과 계획을 정해 구현자·검증자 세션을 시작하고 닫습니다. 상태 파일을 갱신하고 승인을 요청합니다.",
+    constraint: "작업 코드 맥락은 들고 있지 않고 상태는 파일에 둡니다.",
+    gate: "사람 승인 · 계획, merge, 릴리스",
   },
   {
+    id: "implementer",
+    parent: "orchestrator",
+    avatar: "implementer",
     name: "Implementer",
     runsAs: "작업마다 별도 worktree의 워커 세션",
-    duty: "작업 하나를 구현하고, 로컬 검사를 돌리고, 한국어 PR을 엽니다. 리뷰 지적을 가장 빨리 고치는 쪽이 작성자라서, 같은 구현자가 검증 지적까지 처리합니다.",
+    summary: "작업 하나를 구현하고, 로컬 검사를 돌리고, 한국어 PR을 엽니다. 리뷰 지적을 가장 빨리 고치는 쪽이 작성자라서 검증 지적까지 처리합니다.",
+    constraint: "작업 하나, worktree 하나만 맡습니다.",
   },
   {
+    id: "verifier",
+    parent: "orchestrator",
+    avatar: "verifier",
     name: "Verifier",
-    runsAs: "매번 새로 만드는 별도 세션(구현자 재사용 금지)",
-    duty: "수용 기준 대조, 테스트 재실행, 상호작용 체크리스트(모션 줄이기, 긴 한글 문장, 스크린 리더 레이블)를 확인합니다. 코드는 고치지 않고 심각도를 붙인 지적만 남깁니다.",
+    runsAs: "매번 새로 만드는 별도 세션",
+    summary: "수용 기준 대조, 테스트 재실행, 상호작용 체크리스트(모션 줄이기, 긴 한글 문장, 스크린 리더 레이블)를 확인합니다.",
+    constraint: "자기가 구현한 PR은 검증하지 않고, 코드는 고치지 않고 심각도를 붙인 지적만 남깁니다. 구현자 재사용 금지.",
   },
   {
+    id: "reviewer",
+    parent: "orchestrator",
+    avatar: "reviewer",
     name: "External reviewer",
     runsAs: "CodeRabbit (GitHub 앱)",
-    duty: "초안이 아닌 모든 PR을 한국어로 리뷰합니다. merge 권한은 없습니다.",
+    summary: "초안이 아닌 모든 PR을 한국어로 리뷰합니다.",
+    constraint: "merge 권한이 없습니다.",
+    side: true,
   },
   {
+    id: "automation",
+    parent: "orchestrator",
+    avatar: "automation",
     name: "Automation",
     runsAs: "GitHub · 작업 관리 도구 · Slack 연동",
-    duty: "이슈 상태 전환과 알림을 맡습니다. AI가 아니라 규칙 기반이며, PR이 열리면 검토 중, dev에 merge되면 완료로 바뀝니다.",
-  },
-  {
-    name: "Human",
-    runsAs: "저",
-    duty: "중요한 계획을 승인하고, 비교안 중 하나를 고르고, 실기기를 확인하고, merge합니다.",
+    summary: "이슈 상태 전환과 알림을 맡습니다. PR이 열리면 검토 중, dev에 merge되면 완료로 바뀝니다.",
+    constraint: "AI가 아니라 규칙 기반입니다.",
+    side: true,
   },
 ];
 
-export type MemoryRow = { kind: string; location: string; writer: string };
+// 메모리 파일 트리(MemoryTree). 기존 표의 6항목(규칙·명세·결정·현재 상태·교훈·저널)을 폴더 구조로 재배치했다.
+// what = 담는 것, who = 기록하는 쪽(오른쪽 회색 주석 `# what — who`가 된다). children이 있으면 폴더
+// dir: 자식을 다 그리지 않는 빈 폴더(아이콘만 폴더로 보인다)
+export type MemoryNode = { id: string; name: string; what: string; who?: string; dir?: boolean; children?: readonly MemoryNode[] };
 
-export const memory: readonly MemoryRow[] = [
-  { kind: "규칙", location: "CLAUDE.md", writer: "제가 승인한 내용만" },
-  { kind: "명세", location: "docs/", writer: "PR로 갱신" },
-  { kind: "결정", location: "docs/adr/ (ADR)", writer: "PR로 기록, Accepted는 제가 승인" },
-  { kind: "현재 상태", location: "docs/STATUS.md", writer: "오케스트레이터와 마무리하는 에이전트. 제가 AI의 이해를 확인하려고 한국어로 씁니다" },
-  { kind: "교훈", location: "docs/lessons/", writer: "/lesson, 마무리 단계" },
-  { kind: "저널", location: "docs/journal/", writer: "/log, 마무리 단계" },
-];
+export const memoryTree: MemoryNode = {
+  id: "root",
+  name: "project/",
+  what: "에이전트의 기억은 모두 파일",
+  children: [
+    { id: "claude-md", name: "CLAUDE.md", what: "규칙", who: "제가 승인한 내용만" },
+    {
+      id: "docs",
+      name: "docs/",
+      what: "명세",
+      who: "PR로 갱신",
+      children: [
+        { id: "status", name: "STATUS.md", what: "현재 상태 · 다음 작업", who: "오케스트레이터와 마무리하는 에이전트. 제가 AI의 이해를 확인하려고 한국어로 씁니다" },
+        { id: "adr", dir: true, name: "adr/", what: "결정", who: "PR로 기록, Accepted는 제가 승인" },
+        { id: "journal", dir: true, name: "journal/", what: "저널(결정 서사)", who: "/log, 마무리 단계" },
+        { id: "lessons", dir: true, name: "lessons/", what: "교훈(실수 → 방어 수준)", who: "/lesson, 마무리 단계" },
+      ],
+    },
+    {
+      id: "dot-claude",
+      name: ".claude/",
+      what: "에이전트 설정",
+      children: [
+        { id: "settings", name: "settings.json", what: "훅 · 권한 설정" },
+        { id: "skills-dir", dir: true, name: "skills/", what: "슬래시 명령 12종" },
+        { id: "agents-dir", dir: true, name: "agents/", what: "역할 정의" },
+      ],
+    },
+  ],
+};
 
-export type Mode = { name: string; label: string; when: string; human: string };
+export const memoryCaption = "에이전트는 세션이 바뀌면 기억하지 않는다 → 시작할 때 읽고, 끝날 때 쓴다";
+
+// ---- 작업 모드(ModesTabs): 모드마다 탭 하나. 단계의 실행 주체는 칩으로 보인다
+export type Actor = "Owner" | "Orchestrator" | "Implementer" | "Verifier";
+export type ModeStep = { who: Actor; what: string };
+export type ModeCmd = { cmd: string; note: string };
+
+export type Mode = {
+  id: "seq" | "compare" | "parallel"; // 탭·패널 id와 URL 해시(#mode-compare)의 기준
+  tab: string; // 탭 이름(영문)
+  name: string; // 한국어 모드 이름
+  label: string; // 이슈 라벨(모드 표시)
+  when: string; // 언제 쓰나(한 줄)
+  start: ModeCmd; // 사람이 입력하는 시작 명령
+  steps: readonly ModeStep[];
+  next: readonly ModeCmd[]; // 다음에 이어 쓰는 명령(없을 수 있다)
+  nextNote?: string; // next가 비었을 때 보이는 설명
+  guards: readonly string[]; // 제약·가드
+  stepNote?: string; // 단계 목록 위의 작은 주석
+};
+
+export const modeIntro =
+  "모드는 AI가 스스로 바꾸지 않습니다. 전환은 제가 입력하는 슬래시 명령으로만 일어나고, 현재 모드는 이슈 라벨과 STATUS에 기록해 세션이 바뀌어도 이어집니다.";
 
 export const modes: readonly Mode[] = [
-  { name: "A. 순차", label: "mode-seq", when: "기반 작업, 그리고 고른 안 하나를 다듬을 때", human: "계획 승인, merge" },
-  { name: "B. 비교", label: "mode-compare", when: "인터랙션 비중이 큰 UI. 서로 다른 두 안을 만들어 비교", human: "미리보기로 1번 또는 2번 선택" },
-  { name: "C. 오케스트레이션", label: "mode-parallel", when: "방향이 정해진 뒤의 상세 구현. 작업 하나 또는 서로 독립인 여러 개", human: "명령 하나 입력, 질문에 답, merge" },
-];
-
-export const modeNotes: readonly string[] = [
-  "모드는 AI가 스스로 바꾸지 않습니다. 전환은 제가 입력하는 슬래시 명령으로만 일어나고, 현재 모드는 이슈 라벨과 STATUS에 기록해 세션이 바뀌어도 이어집니다.",
-  "비교 라운드는 최대 2회입니다. 두 번 해도 안 맞으면 세 번째 라운드 대신 디자인 단계로 되돌립니다. 비교는 비용이 두 배라서 정한 상한입니다.",
-];
-
-export const parallelRules: readonly string[] = [
-  "작업 하나 = worktree 하나 = 브랜치 하나 = PR 하나.",
-  "병렬은 건드리는 파일이 겹치지 않는 작업끼리만 합니다.",
-  "package.json과 lockfile, DB 마이그레이션, 공용 테마 토큰, CLAUDE.md와 .claude/ 변경은 병렬로 돌리지 않고 직렬로 처리합니다.",
-  "비밀 값은 git에 두지 않습니다. 워크트리 설정 스크립트가 기본 체크아웃에서 복사합니다.",
+  {
+    id: "seq",
+    tab: "Sequential",
+    name: "A. 순차",
+    label: "mode-seq",
+    when: "기반 작업, 그리고 고른 안 하나를 다듬을 때 씁니다. 제가 하는 일은 계획 승인과 merge입니다.",
+    start: { cmd: "/seq", note: "작업 키와 함께 시작" },
+    stepNote: "순차 모드에서는 세션 하나가 구현자로 일합니다.",
+    steps: [
+      { who: "Owner", what: "/seq 에 작업 키를 주고 시작합니다." },
+      { who: "Implementer", what: "규칙·STATUS·교훈 색인과 작업 이슈(수용 기준)를 읽고, 이슈에 순차 모드 라벨을 붙인 뒤 최신 dev에서 작업 브랜치를 딥니다." },
+      { who: "Implementer", what: "계획과 바꿀 파일 목록을 한국어로 제시합니다." },
+      { who: "Owner", what: "동작·보안·데이터에 영향이 있는 변경이면 계획을 승인합니다. 승인 전에는 구현하지 않습니다." },
+      { who: "Implementer", what: "실패하는 테스트를 먼저 쓰고, 구현해서 통과시킵니다." },
+      { who: "Implementer", what: "/finish 로 마무리합니다. 검사, 한국어 PR, 기록, push, 독립 검증 요청까지 한 번에 합니다." },
+      { who: "Verifier", what: "구현에 참여하지 않은 새 세션에서 제가 /verify 를 실행해 마지막 push를 검증합니다." },
+      { who: "Owner", what: "리뷰하고 dev에 merge합니다." },
+    ],
+    next: [
+      { cmd: "/finish", note: "작업 마무리" },
+      { cmd: "/verify", note: "새 세션에서 독립 검증" },
+    ],
+    guards: [
+      "동작·보안·데이터에 영향이 있으면 계획 승인 전에 구현하지 않습니다.",
+      "구현은 실패하는 테스트를 먼저 씁니다.",
+      "실행하지 않은 검사를 통과했다고 쓰지 않습니다.",
+    ],
+  },
+  {
+    id: "compare",
+    tab: "Compare",
+    name: "B. 비교",
+    label: "mode-compare",
+    when: "인터랙션 비중이 큰 UI처럼 보고 골라야 할 때 씁니다. 서로 다른 두 안을 만들어 비교하고, 제가 미리보기로 1번 또는 2번을 고릅니다.",
+    start: { cmd: "/compare", note: "작업 키와 함께 시작" },
+    steps: [
+      { who: "Owner", what: "/compare 에 작업 키를 주고 시작합니다." },
+      { who: "Orchestrator", what: "작업 이슈와 설계 문서, 이전 라운드 기록을 읽고 라운드 번호를 정합니다. 3라운드가 될 상황이면 멈추고 /back-to-design 을 제안합니다." },
+      { who: "Orchestrator", what: "이슈에 비교 모드 라벨을 붙이고 비교 라운드 시작을 기록한 뒤, 의도적으로 다른 두 안의 지시서를 씁니다." },
+      { who: "Implementer", what: "구현자 둘이 라운드별 브랜치(-r1-v1, -r1-v2)와 서로 다른 worktree에서 동시에 구현하고, dev를 대상으로 초안 PR과 기기 미리보기를 만듭니다." },
+      { who: "Orchestrator", what: "무엇이 다른지, 미리보기 링크, 각 안의 모션 줄이기 동작을 한국어 비교 코멘트로 남깁니다. 실제로 생성된 미리보기만 링크합니다." },
+      { who: "Owner", what: "미리보기를 보고 1번 또는 2번을 고르거나, 다음 전환 명령을 입력합니다." },
+    ],
+    next: [
+      { cmd: "/pick", note: "한 안을 고르고 나머지를 닫음" },
+      { cmd: "/refine", note: "한 안이 가까움 → 순차로 다듬기" },
+      { cmd: "/retry", note: "둘 다 거절 → 새 라운드" },
+      { cmd: "/back-to-design", note: "설계 단계로 되돌림" },
+    ],
+    guards: [
+      "비교 라운드는 최대 2회입니다. 두 번 해도 안 맞으면 세 번째 라운드 대신 디자인 단계로 되돌립니다. 비교는 비용이 두 배라서 정한 상한입니다.",
+      "두 안은 서로 다른 worktree에서 동시에 구현하고, 의도적으로 다르게 만듭니다.",
+      "라운드 2는 라운드 1의 브랜치를 재사용하지 않습니다. 이전 브랜치는 참고용으로 남깁니다.",
+      "/pick·/refine 은 고르지 않은 안의 PR을 닫고, 브랜치 삭제는 제가 확인한 뒤에만 합니다.",
+    ],
+  },
+  {
+    id: "parallel",
+    tab: "Parallel",
+    name: "C. 오케스트레이션",
+    label: "mode-parallel",
+    when: "방향이 정해진 뒤의 상세 구현에 씁니다. 작업 하나 또는 서로 독립인 여러 개를 맡기고, 제가 하는 일은 명령 하나, 질문에 답, merge입니다.",
+    start: { cmd: "/parallel", note: "작업 키 하나 이상으로 시작" },
+    steps: [
+      { who: "Owner", what: "/parallel 에 작업 키를 하나 이상 주고 시작합니다." },
+      { who: "Orchestrator", what: "작업마다 건드릴 파일을 추정합니다. 겹치거나 lockfile·마이그레이션·테마 토큰·.claude/ 를 건드리는 작업은 병렬을 거부하고 직렬화합니다. 병렬 모드 라벨을 붙입니다." },
+      { who: "Orchestrator", what: "작업마다 구현자 하나를 새 worktree에서 시작합니다. 지시서는 스스로 완결되게 쓰고, 동작·보안·데이터에 영향이 있는 일은 결정하지 말고 묻게 합니다." },
+      { who: "Implementer", what: "구현하고 로컬 검사를 돌려 한국어 PR을 엽니다. 질문은 오케스트레이터를 거쳐 제게 오고, 제 답이 같은 길로 돌아갑니다." },
+      { who: "Orchestrator", what: "외부 리뷰 지적을 valid / invalid / 제품 결정 필요로 분류해 valid만 같은 구현자에게 보냅니다. 자동 수정은 최대 2라운드입니다." },
+      { who: "Orchestrator", what: "최종 SHA를 로컬·원격·PR head 세 곳에서 확인하고, 새 검증자 세션을 시작합니다." },
+      { who: "Verifier", what: "마지막 head를 검증합니다. 지적이 있으면 같은 구현자에게 가고, 새 push가 생기면 새 검증자가 새 head를 다시 검증합니다." },
+      { who: "Owner", what: "오케스트레이터의 보고(PR 링크, 검증 결과, 남은 위험)를 보고 merge합니다. merge는 AI가 하지 않습니다." },
+    ],
+    next: [],
+    nextNote: "이 모드에서 제가 더 입력하는 명령은 없습니다. 검증자는 오케스트레이터가 자동으로 새 세션에 시작합니다.",
+    guards: [
+      "작업 하나 = worktree 하나 = 브랜치 하나 = PR 하나.",
+      "병렬은 건드리는 파일이 겹치지 않는 작업끼리만 합니다.",
+      "package.json과 lockfile, DB 마이그레이션, 공용 테마 토큰, CLAUDE.md와 .claude/ 변경은 병렬로 돌리지 않고 직렬로 처리합니다.",
+      "비밀 값은 git에 두지 않습니다. 워크트리 설정 스크립트가 기본 체크아웃에서 복사합니다.",
+    ],
+  },
 ];
 
 // ---------- 3. 스킬 12종 ----------
@@ -122,10 +277,10 @@ export type Skill = {
 };
 
 export const skillGroups: Readonly<Record<SkillGroup, string>> = {
-  mode: "작업 모드 시작",
-  switch: "비교 라운드 이후 전환",
-  quality: "검증과 마무리",
-  record: "기록과 상태",
+  mode: "모드 시작",
+  switch: "비교 이후 전환",
+  quality: "검증·마무리",
+  record: "기록·상태",
 };
 
 export const skillsIntro = [

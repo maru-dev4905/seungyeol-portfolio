@@ -1,0 +1,261 @@
+/* 작업 모드 탭(ModesTabs). 색·반경·글꼴은 토큰만(D-016). 가로 스크롤 없음: 탭은 3등분, 모바일 스테퍼는 1열. */
+.modes {
+  margin-top: 8px;
+}
+
+.intro {
+  max-width: 760px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-body);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+/* ---------- 탭 줄: 3등분 ---------- */
+.tablist {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--line-row);
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 12px 12px 0;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  text-align: left;
+  color: var(--fg-muted);
+  transition:
+    color var(--t-fast),
+    border-color var(--t-fast);
+}
+
+.tab:hover {
+  color: var(--fg-body);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--fg);
+  border-bottom-color: var(--fg);
+}
+
+.tabName {
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.tabSub {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ---------- 패널: 한 칸에 겹쳐 쌓고 활성만 보인다(높이 점프 없음) ---------- */
+.panels {
+  display: grid;
+}
+
+.panel {
+  grid-area: 1 / 1;
+  min-width: 0;
+  padding-top: 24px;
+  scroll-margin-top: 96px; /* 해시(#mode-compare)로 열 때 고정 헤더에 가리지 않게 */
+  opacity: 0;
+  visibility: hidden;
+  /* 사라질 때: 투명해진 뒤 숨김(포커스·읽기에서도 빠진다) */
+  transition:
+    opacity 0.25s,
+    visibility 0s linear 0.25s;
+}
+
+.panel[data-active] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.25s;
+}
+
+.panelTitle {
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+}
+
+.when {
+  max-width: 760px;
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 24px 48px;
+  margin-top: 28px;
+}
+
+.stepNote {
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-sub);
+}
+
+/* ---------- 세로 스테퍼: 번호 + 누가(칩) + 무엇을 ---------- */
+.stepper {
+  display: grid;
+}
+
+.step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 14px;
+  padding-bottom: 18px;
+}
+
+/* 번호 사이를 잇는 세로선(마지막 단계는 없음) */
+.step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  bottom: 0;
+  left: 13.5px;
+  width: 1px;
+  background: var(--line-row);
+}
+
+.num {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--fg-muted);
+  border-radius: 50%;
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-sub);
+}
+
+.stepBody {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  padding-top: 2px;
+}
+
+.chip {
+  padding: 1px 9px;
+  border: 1px solid var(--line-row);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fg-sub);
+}
+
+.chip[data-human] {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+.what {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--fg-body);
+}
+
+/* ---------- 오른쪽: 명령 알약 + 가드 ---------- */
+.aside {
+  display: grid;
+  align-content: start;
+  gap: 24px;
+}
+
+.asideLabel {
+  margin: 0 0 10px; /* h4의 기본 위 여백 제거 */
+  font-size: 12px;
+  line-height: 14.4px;
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+.cmds {
+  display: grid;
+  gap: 8px;
+}
+
+.cmds li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.cmdPill {
+  padding: 3px 12px;
+  border: 1px solid var(--line-row);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--fg);
+}
+
+.cmdPill[data-start] {
+  border-color: var(--fg);
+}
+
+.cmdNote {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-sub);
+}
+
+.guards {
+  display: grid;
+  gap: 10px;
+}
+
+.guards li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg-body);
+}
+
+.guards li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.8em;
+  width: 8px;
+  height: 1px;
+  background: var(--fg-muted);
+}
+
+@media (max-width: 899px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .tab {
+    padding: 10px 6px 10px 0;
+  }
+
+  .tabName {
+    font-size: 14px;
+  }
+}

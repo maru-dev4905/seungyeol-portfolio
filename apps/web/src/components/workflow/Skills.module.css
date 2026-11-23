@@ -1,0 +1,108 @@
+/* 스킬 카드 그리드(SkillGrid). 색·반경·글꼴은 토큰만(D-016). 카드 패딩 14px로 높이를 줄였다. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line-row);
+  border-radius: var(--radius-media);
+}
+
+.group {
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+}
+
+.cmd {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.purpose {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fg-body);
+}
+
+.more {
+  margin-top: auto; /* 같은 줄 카드 높이가 같아도 "언제 · 가드"는 늘 카드 맨 아래 */
+  padding-top: 6px;
+}
+
+.more summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-sub);
+  cursor: pointer;
+  list-style: none;
+}
+
+.more summary::-webkit-details-marker {
+  display: none;
+}
+
+.more summary:hover {
+  color: var(--fg);
+}
+
+.more summary svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--t-fast);
+}
+
+.more[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.dl {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-row);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-body);
+}
+
+.dl dt {
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+  margin-bottom: 2px;
+}
+
+.dl dd {
+  margin: 0;
+}
+
+@media (max-width: 899px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 559px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

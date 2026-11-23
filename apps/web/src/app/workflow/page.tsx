@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import styles from "@/components/workflow/Workflow.module.css";
 import { WorkflowDiagram } from "@/components/workflow/WorkflowDiagram";
+import { RolesOrgChart } from "@/components/workflow/RolesOrgChart";
+import { MemoryTree } from "@/components/workflow/MemoryTree";
+import { ModesTabs } from "@/components/workflow/ModesTabs";
+import { SkillGrid } from "@/components/workflow/SkillGrid";
+import { SectionPill } from "@/components/nav/SectionPill";
 import { Lines } from "@/components/motion/Lines";
 import { RevealGroup } from "@/components/motion/RevealGroup";
 import { Rule } from "@/components/motion/Rule";
@@ -13,22 +18,15 @@ import {
   flowMain,
   flowSide,
   lessons,
-  memory,
-  modeNotes,
-  modes,
-  parallelRules,
   portfolioIntro,
   principles,
   recordsIntro,
   reviewPoints,
-  roles,
-  skillGroups,
   skills,
   skillsIntro,
   workflowHero,
   workflowMeta,
   workflowSections,
-  type SkillGroup,
 } from "@/lib/workflow";
 
 export const metadata: Metadata = {
@@ -37,8 +35,15 @@ export const metadata: Metadata = {
   alternates: { canonical: "/workflow" },
 };
 
-// 순서 있는 단계 목록과 스킬 그룹 순서(데이터 순서가 아니라 화면 순서를 여기서 고정한다)
-const SKILL_GROUP_ORDER: readonly SkillGroup[] = ["mode", "switch", "quality", "record"];
+// 하단 알약(SectionPill)이 이동할 섹션. id는 아래 각 <section id>와 같고, 위에서 아래 순서다(6개)
+const PILL_SECTIONS = [
+  { id: "principles", label: "Principles" },
+  { id: "system", label: "System" },
+  { id: "skills", label: "Skills" },
+  { id: "process", label: "Process" },
+  { id: "records", label: "Records" },
+  { id: "portfolio", label: "Portfolio" },
+];
 
 /** 섹션 머리: 구분선 -> "( 0n ) 라벨" -> 제목 줄 마스크. 섹션 하나 = RevealGroup 타임라인 하나(About과 같은 문법) */
 function Head({ n, label, title }: { n: number; label: string; title: string }): ReactNode {
@@ -63,6 +68,11 @@ export default function WorkflowPage() {
 
   return (
     <main className={styles.page}>
+      <SectionPill sections={PILL_SECTIONS} endId="workflow-end" label="Workflow 섹션" />
+      {/* JS가 없으면 모드 탭 줄을 숨기고 세 패널을 모두 세로로 펼친다(서버 HTML에는 패널 셋이 다 있다) */}
+      <noscript>
+        <style>{"[data-mode-tablist]{display:none !important}[data-mode-panel]{opacity:1 !important;visibility:visible !important;grid-area:auto !important}"}</style>
+      </noscript>
       <div className={styles.wrap}>
         {/* 0. 머리 */}
         <RevealGroup as="header" className={styles.hero}>
@@ -79,7 +89,7 @@ export default function WorkflowPage() {
         </RevealGroup>
 
         {/* 1. 원칙 */}
-        <RevealGroup as="section" className={styles.section} aria-label={S.principles.label}>
+        <RevealGroup as="section" id="principles" className={styles.section} aria-label={S.principles.label}>
           <Head n={1} label={S.principles.label} title={S.principles.title} />
           <ul className={styles.cards3}>
             {principles.map((p) => (
@@ -93,90 +103,24 @@ export default function WorkflowPage() {
         </RevealGroup>
 
         {/* 2. 역할 · 메모리 · 모드 */}
-        <RevealGroup as="section" className={styles.section} aria-label={S.system.label}>
+        <RevealGroup as="section" id="system" className={styles.section} aria-label={S.system.label}>
           <Head n={2} label={S.system.label} title={S.system.title} />
           <div data-r="body">
             <h3 className={styles.sub}>역할 Roles</h3>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">역할</th>
-                  <th scope="col">실행 주체</th>
-                  <th scope="col">하는 일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roles.map((r) => (
-                  <tr key={r.name}>
-                    <td>{r.name}</td>
-                    <td data-label="실행 주체">{r.runsAs}</td>
-                    <td data-label="하는 일">{r.duty}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <p className={styles.lead}>역할은 사람과 AI 세션, 외부 도구로 나뉘고, 보고는 위에서 아래로 흐릅니다. 사람 승인이 필요한 지점은 선 위에 표시했습니다.</p>
+            <RolesOrgChart />
 
             <h3 className={styles.sub}>메모리 Memory</h3>
             <p className={styles.lead}>에이전트는 세션이 끝나면 잊습니다. 아래 파일이 프로젝트의 기억입니다.</p>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">종류</th>
-                  <th scope="col">위치</th>
-                  <th scope="col">기록하는 쪽</th>
-                </tr>
-              </thead>
-              <tbody>
-                {memory.map((m) => (
-                  <tr key={m.kind}>
-                    <td>{m.kind}</td>
-                    <td data-label="위치" className={styles.mono}>
-                      {m.location}
-                    </td>
-                    <td data-label="기록하는 쪽">{m.writer}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <MemoryTree />
 
             <h3 className={styles.sub}>작업 모드 Modes</h3>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">모드</th>
-                  <th scope="col">언제</th>
-                  <th scope="col">제가 하는 일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {modes.map((m) => (
-                  <tr key={m.name}>
-                    <td>
-                      {m.name} <span className={`${styles.small} ${styles.mono}`}>{m.label}</span>
-                    </td>
-                    <td data-label="언제">{m.when}</td>
-                    <td data-label="제가 하는 일">{m.human}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <ul className={styles.bullets}>
-              {modeNotes.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
-
-            <h3 className={styles.sub}>병렬 안전 규칙</h3>
-            <ul className={styles.bullets}>
-              {parallelRules.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
+            <ModesTabs />
           </div>
         </RevealGroup>
 
         {/* 3. 스킬 12종 */}
-        <RevealGroup as="section" className={styles.section} aria-label={S.skills.label}>
+        <RevealGroup as="section" id="skills" className={styles.section} aria-label={S.skills.label}>
           <Head n={3} label={S.skills.label} title={S.skills.title} />
           {skillsIntro.map((t) => (
             <p key={t} className={styles.lead} data-r="body">
@@ -186,35 +130,13 @@ export default function WorkflowPage() {
           <p className={styles.small} data-r="body" style={{ marginTop: 12 }}>
             커스텀 스킬 {skills.length}종
           </p>
-          {SKILL_GROUP_ORDER.map((g) => (
-            <div key={g} className={styles.group} data-r="item">
-              <p className={styles.groupLabel}>{skillGroups[g]}</p>
-              <ul className={styles.skillGrid}>
-                {skills
-                  .filter((s) => s.group === g)
-                  .map((s) => (
-                    <li key={s.cmd} className={styles.skillCard} data-skill>
-                      <h3 className={styles.cmd}>{s.cmd}</h3>
-                      <p className={styles.purpose}>{s.purpose}</p>
-                      <dl className={styles.dl}>
-                        <div>
-                          <dt>언제 쓰나</dt>
-                          <dd>{s.when}</dd>
-                        </div>
-                        <div>
-                          <dt>핵심 가드와 동작</dt>
-                          <dd>{s.guard}</dd>
-                        </div>
-                      </dl>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ))}
+          <div data-r="body">
+            <SkillGrid />
+          </div>
         </RevealGroup>
 
         {/* 4. 작업 프로세스 도식 + 텍스트 단계 목록 */}
-        <RevealGroup as="section" className={styles.section} aria-label={S.process.label}>
+        <RevealGroup as="section" id="process" className={styles.section} aria-label={S.process.label}>
           <Head n={4} label={S.process.label} title={S.process.title} />
           <p className={styles.lead} data-r="body">
             작업 하나가 정의에서 릴리스까지 가는 길입니다. 사람이 개입하는 지점(이중선 박스)은 계획 승인, merge, 릴리스입니다. 되돌아가는 화살표는 리뷰 지적을 고치는 루프입니다.
@@ -233,7 +155,7 @@ export default function WorkflowPage() {
         </details>
 
         {/* 5. 기록 체계 + 코드 리뷰 */}
-        <RevealGroup as="section" className={styles.section} aria-label={S.records.label}>
+        <RevealGroup as="section" id="records" className={styles.section} aria-label={S.records.label}>
           <Head n={5} label={S.records.label} title={S.records.title} />
           <p className={styles.lead} data-r="body">
             {recordsIntro}
@@ -305,7 +227,7 @@ export default function WorkflowPage() {
         </RevealGroup>
 
         {/* 6. 이 포트폴리오를 만든 방식 */}
-        <RevealGroup as="section" className={styles.section} aria-label={S.portfolio.label}>
+        <RevealGroup as="section" id="portfolio" className={styles.section} aria-label={S.portfolio.label}>
           <Head n={6} label={S.portfolio.label} title={S.portfolio.title} />
           <p className={styles.lead} data-r="body">
             {portfolioIntro}
@@ -319,6 +241,8 @@ export default function WorkflowPage() {
             ))}
           </div>
         </RevealGroup>
+        {/* 알약이 푸터 근처에서 숨는 기준(페이지 끝) */}
+        <div id="workflow-end" className={styles.end} />
       </div>
     </main>
   );

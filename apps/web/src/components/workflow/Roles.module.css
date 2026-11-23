@@ -1,0 +1,375 @@
+/* 역할 조직도(RolesOrgChart). 색·반경·글꼴은 globals.css 토큰만 쓴다(D-016).
+   연결선은 li의 의사 요소가 그린다(장식). 데스크톱 = 가로 트리, 768px 이하 = 왼쪽 세로선의 세로 스택 트리.
+   모션: .org[data-motion] 은 JS가 건 때만 존재 -> JS 없음·움직임 줄이기에서는 아래 pending 규칙이 적용되지 않아 정적이다. */
+.org {
+  margin-top: 24px;
+  /* 선이 앞 단계에서 이어지는 길이(px)와 간격 */
+  --stem: 14px;
+  --drop: 14px;
+  --link: var(--fg-muted);
+  --u: calc(var(--dur-enter) * 0.75); /* 한 단계(깊이)당 지연 */
+  --t-line: calc(var(--dur-enter) * 0.6);
+}
+
+.tree,
+.kids {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.kids {
+  position: relative;
+}
+
+/* 같은 부모의 자식들은 가로로 나란히. 각 칸이 같은 폭이라 부모 카드의 가운데가 자식 줄 전체의 가운데와 맞는다 */
+.kids > .node {
+  flex: 1 1 0;
+  padding: calc(var(--stem) + var(--drop)) 8px 0;
+}
+
+/* 외부 리뷰어·자동화(옆 가지)는 줄기에서 한 칸 떨어뜨린다 */
+.kids > .node[data-side]:not([data-side] + [data-side]) {
+  margin-left: 12px;
+}
+
+/* 부모 카드 아래로 내려가는 줄기 */
+.kids::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: var(--stem);
+  background: var(--link);
+  transform-origin: top;
+}
+
+/* 형제들을 가로로 잇는 선(자기 칸 전체 폭, 첫째는 가운데부터, 마지막은 가운데까지) + 카드로 내려가는 선 */
+.kids > .node::before,
+.kids > .node::after {
+  content: "";
+  position: absolute;
+  background: var(--link);
+}
+
+.kids > .node::before {
+  top: var(--stem);
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform-origin: center;
+}
+
+.kids > .node:first-child::before {
+  left: 50%;
+  transform-origin: left;
+}
+
+.kids > .node:last-child::before {
+  right: 50%;
+  transform-origin: right;
+}
+
+.kids > .node:only-child::before {
+  display: none; /* 자식이 하나면 줄기가 그대로 내려간다 */
+}
+
+.kids > .node::after {
+  top: var(--stem);
+  left: 50%;
+  width: 1px;
+  height: var(--drop);
+  transform-origin: top;
+}
+
+/* 옆 가지는 점선으로(도식의 자동화·외부 = 점선과 같은 약속) */
+.kids > .node[data-side]::before {
+  background: repeating-linear-gradient(to right, var(--link) 0 4px, transparent 4px 8px);
+}
+
+.kids > .node[data-side]::after {
+  background: repeating-linear-gradient(to bottom, var(--link) 0 4px, transparent 4px 8px);
+}
+
+/* 사람 승인 표시가 붙는 연결(자식이 하나이고 gate가 있을 때): 줄기를 길게 하고 가운데에 표시를 얹는다 */
+.kids[data-gate-kids] {
+  --drop: 36px;
+}
+
+.gate {
+  position: absolute;
+  top: calc(var(--stem) + var(--drop) / 2);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  padding: 2px 10px;
+  border: 1px solid var(--fg);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  color: var(--fg);
+}
+
+/* ---------- 카드 ---------- */
+.card {
+  width: 100%;
+  max-width: 380px;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  column-gap: 14px;
+  row-gap: 10px;
+  align-content: start;
+  padding: 16px;
+  border: 1px solid var(--line-row);
+  border-radius: var(--radius-media);
+  background: var(--bg);
+}
+
+/* 사람 = 이중선(도식의 사람 박스와 같은 약속), 자동화 = 점선 */
+.card[data-kind="human"] {
+  border-color: var(--fg);
+  box-shadow:
+    inset 0 0 0 3px var(--bg),
+    inset 0 0 0 4px var(--fg-muted);
+}
+
+.card[data-kind="automation"] {
+  border-style: dashed;
+  border-color: var(--fg-muted);
+}
+
+/* 이름·실행 주체는 아바타 옆, 책임·제약은 카드 전체 폭 */
+.cardHead {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.avatar {
+  flex: none;
+  color: var(--fg);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.accent {
+  fill: var(--timeline-accent);
+  stroke: var(--timeline-accent);
+}
+
+.dot {
+  fill: currentColor;
+  stroke: none;
+}
+
+.roleName {
+  margin: 0; /* h4의 기본 여백 제거(전역 리셋은 h1~h3만 지운다) */
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.runsAs {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--fg-sub);
+}
+
+.roleSummary {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-body);
+}
+
+.roleConstraint {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-row);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-sub);
+}
+
+.constraintLabel {
+  margin-right: 4px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+/* ---------- 등장 모션(JS가 data-motion을 걸 때만) ----------
+   위에서 아래로: 깊이(--depth)마다 --u만큼 늦게, 같은 깊이는 --i * --stagger 어긋나게. 줄기 -> 가로선·내림선 -> 카드 순서.
+   transform/opacity만 움직인다. */
+.org[data-motion] .kids::before,
+.org[data-motion] .kids > .node::before,
+.org[data-motion] .kids > .node::after,
+.org[data-motion] .card,
+.org[data-motion] .gate {
+  transition-timing-function: var(--ease-reveal);
+}
+
+.org[data-motion] .kids::before,
+.org[data-motion] .kids > .node::before,
+.org[data-motion] .kids > .node::after {
+  transition-property: transform;
+  transition-duration: var(--t-line);
+}
+
+.org[data-motion] .card {
+  transition-property: opacity, transform;
+  transition-duration: calc(var(--dur-enter) * 0.7);
+  transition-delay: calc(var(--depth) * var(--u) + var(--i) * var(--stagger) + var(--stagger));
+}
+
+.org[data-motion] .gate {
+  transition-property: opacity;
+  transition-duration: calc(var(--dur-enter) * 0.5);
+  transition-delay: calc(var(--depth) * var(--u) - var(--u) * 0.2);
+}
+
+/* 자식 li의 --depth는 부모 깊이 + 1 이다. 그 연결선(가로선·내림선)은 부모 카드가 나온 뒤에 그려지도록 한 단계 뺀 값을 쓴다 */
+.org[data-motion] .kids > .node::before,
+.org[data-motion] .kids > .node::after {
+  transition-delay: calc((var(--depth) - 1) * var(--u) + var(--u) * 0.45);
+}
+
+.org[data-motion] .kids::before {
+  transition-delay: calc(var(--depth) * var(--u) + var(--u) * 0.3);
+}
+
+/* 숨김 상태로 들어갈 때는 전환 없이 즉시(전환이 있으면 보이던 카드가 천천히 사라진다). 전환은 "go"로 바뀔 때만 돈다 */
+.org[data-motion="pending"] .kids::before,
+.org[data-motion="pending"] .kids > .node::before,
+.org[data-motion="pending"] .kids > .node::after,
+.org[data-motion="pending"] .card,
+.org[data-motion="pending"] .gate {
+  transition: none;
+}
+
+.org[data-motion="pending"] .card {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.org[data-motion="pending"] .gate {
+  opacity: 0;
+}
+
+.org[data-motion="pending"] .kids::before,
+.org[data-motion="pending"] .kids > .node::after {
+  transform: scaleY(0);
+}
+
+.org[data-motion="pending"] .kids > .node::before {
+  transform: scaleX(0);
+}
+
+/* ---------- 모바일: 세로 스택 트리(왼쪽 세로선) ---------- */
+@media (max-width: 768px) {
+  .tree,
+  .kids {
+    display: block;
+    width: auto; /* 데스크톱의 width: 100% 에 왼쪽 여백이 더해져 넘치지 않게 */
+  }
+
+  .node {
+    align-items: stretch;
+  }
+
+  .card {
+    max-width: none;
+    padding: 14px;
+  }
+
+  /* 자식 목록: 부모 아바타 가운데 아래로 세로선이 내려오고, 자식마다 가로 틱으로 카드에 닿는다 */
+  .kids {
+    margin-left: 38px;
+    padding-left: 16px;
+  }
+
+  .kids::before {
+    display: none;
+  }
+
+  .kids > .node,
+  .kids > .node[data-side]:not([data-side] + [data-side]) {
+    margin-left: 0;
+    padding: 12px 0 0;
+  }
+
+  .kids > .node::before {
+    display: block; /* 데스크톱의 only-child 숨김을 되돌린다 */
+    top: 38px;
+    left: -16px;
+    right: auto;
+    width: 16px;
+    height: 1px;
+    transform-origin: left;
+  }
+
+  .kids > .node:first-child::before,
+  .kids > .node:last-child::before,
+  .kids > .node:only-child::before {
+    display: block;
+    left: -16px;
+    right: auto;
+    transform-origin: left;
+  }
+
+  /* 세로선: 칸 전체 높이(마지막 칸은 틱 높이까지만) */
+  .kids > .node::after {
+    top: 0;
+    left: -16px;
+    width: 1px;
+    height: 100%;
+  }
+
+  .kids > .node:last-child::after {
+    height: 38px;
+  }
+
+  .kids > .node[data-side]::before {
+    background: repeating-linear-gradient(to right, var(--link) 0 4px, transparent 4px 8px);
+  }
+
+  .kids > .node[data-side]::after {
+    background: repeating-linear-gradient(to bottom, var(--link) 0 4px, transparent 4px 8px);
+  }
+
+  .kids[data-gate-kids] {
+    --drop: 0px;
+  }
+
+  /* 모바일의 사람 승인 표시: 카드 위에 붙는 작은 표시 */
+  .gate {
+    position: static;
+    transform: none;
+    align-self: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .org[data-motion="pending"] .kids > .node::before {
+    transform: scaleX(0);
+  }
+
+  .org[data-motion="pending"] .kids > .node::after {
+    transform: scaleY(0);
+  }
+}

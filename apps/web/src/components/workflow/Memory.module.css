@@ -1,0 +1,156 @@
+/* 메모리 파일 트리(MemoryTree). 고정폭 글꼴은 --font-mono 토큰. 색·반경은 토큰만(D-016).
+   들여쓰기 = 행의 padding(--depth * 20px)이라 중첩 목록이어도 행이 전체 폭을 쓰고, 오른쪽 주석 열이 줄맞춤된다. */
+.term {
+  margin: 20px 0 0;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-media);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+
+/* 윗줄: 터미널 창 느낌(속 빈 점 셋 + 이름) */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--surface-line);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.bar i {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--fg-muted);
+  border-radius: 50%;
+}
+
+.bar span {
+  margin-left: 8px;
+}
+
+.tree {
+  padding: 10px 0;
+}
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: start;
+  padding: 3px 14px;
+  font-size: 14px;
+  line-height: 22px;
+  transition: background-color var(--t-fast);
+}
+
+/* 들여쓰기 가이드 선: 깊이마다 20px 칸의 왼쪽에 세로선 하나(위 폴더의 화살표 아래에 놓인다) */
+.row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 14px;
+  width: calc(var(--depth) * 20px);
+  background: repeating-linear-gradient(to right, transparent 0 8px, var(--line) 8px 9px, transparent 9px 20px);
+  pointer-events: none;
+}
+
+.row:hover {
+  background: var(--row-hover);
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 22px;
+  padding-left: calc(var(--depth) * 20px);
+  color: var(--fg);
+  text-align: left;
+  letter-spacing: 0;
+}
+
+button.name {
+  cursor: pointer;
+}
+
+.name span:last-child {
+  overflow-wrap: anywhere;
+}
+
+.chev,
+.icon {
+  flex: none;
+  fill: none;
+  stroke: var(--fg-muted);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chev {
+  transition: transform var(--t-fast);
+}
+
+button[aria-expanded="true"] .chev {
+  transform: rotate(90deg);
+}
+
+.chevGap {
+  flex: none;
+  width: 12px;
+}
+
+.note {
+  font-size: 13px;
+  line-height: 22px; /* 이름 줄과 같은 높이라 같은 행의 글자 높이가 맞는다 */
+  color: var(--fg-muted);
+  letter-spacing: 0;
+  transition: color var(--t-fast);
+}
+
+/* hover한 행: 설명이 본문 색으로 강조된다 */
+.row:hover .note {
+  color: var(--fg-body);
+}
+
+.what {
+  color: inherit;
+}
+
+.caption {
+  margin: 0;
+  padding: 12px 14px;
+  border-top: 1px solid var(--surface-line);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-sub);
+  letter-spacing: 0;
+}
+
+.prompt {
+  margin-right: 8px;
+  color: var(--timeline-accent);
+}
+
+/* 모바일: 주석 열을 이름 아래 줄로 접는다(가로 스크롤 없음). 들여쓰기·아이콘 폭만큼 안쪽으로 맞춘다 */
+@media (max-width: 768px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+    padding: 5px 12px;
+  }
+
+  .row::before {
+    left: 12px;
+  }
+
+  .note {
+    padding-left: calc(var(--depth) * 20px + 12px + 6px + 14px + 6px);
+  }
+}
