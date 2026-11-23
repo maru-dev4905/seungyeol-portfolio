@@ -8,7 +8,7 @@ import { shapeForPath, type SceneShape } from "@/components/scene/shapes";
 import { HandoffLink } from "@/components/transition/HandoffLink";
 import { mockupMedia } from "@/lib/handoff";
 import type { ProjectGroup, ProjectMedia, Tint } from "@/lib/projects";
-import { groupLabels, siteCopy } from "@/lib/site";
+import { groupLabels, homeCopy, siteCopy } from "@/lib/site";
 import styles from "./MenuOverlay.module.css";
 
 export type MenuProject = { slug: string; group: ProjectGroup; shortName: string; tint: Tint; media?: ProjectMedia };
@@ -18,12 +18,13 @@ export type MenuProject = { slug: string; group: ProjectGroup; shortName: string
 // 누르면 이 장면이 그대로 화면 전체로 커진 뒤 그 페이지로 간다(Works·About). 창 안의 그림과 커지는 면이 같은 셰이더라 이음매가 없다
 // 키 = 항목 이름, 값 = 그 항목의 형태. Library는 새 형태를 만들지 않고 Works의 부채꼴(여러 막대가 모이는 별표 모양 = "모아 둔 도구")을 다시 쓴다.
 // 목록에서 Works와 이웃하지 않게 About 아래에 두어, 올렸을 때 옆 항목과 같은 모양이 연달아 나오지 않는다
-const SHAPE_BY_KEY: Readonly<Record<string, SceneShape>> = { works: "works", about: "about", library: "works", contact: "contact" };
+const SHAPE_BY_KEY: Readonly<Record<string, SceneShape>> = { works: "works", about: "about", library: "works", contact: "contact", workflow: "home" };
+// workflow = Engineering 그룹 맨 앞의 Workflow 알약(프로젝트가 아니라 /workflow 페이지 링크). /workflow 페이지의 형태가 기본형("home")이라 같은 형태를 쓴다 -> 새 형태 없이 hover·확대·도착 장면이 이어진다
 // 창(30vw x 창 높이, 가로가 좁다)에서 오브젝트 전체가 들어오도록 줄여 보는 배율. 확대 면(HandoffLayer)도 같은 값을 쓴다
 const WINDOW_ZOOM = 0.5;
 
 /**
- * 풀스크린 메뉴(측정 1440x900). 흰 면 위에: 왼쪽 세리프 내비 4개(Works / About / Library / Contact) + 그 아래 그룹 2개(Engineering = Meerkit·Weave, Selected works = 나머지) 목록,
+ * 풀스크린 메뉴(측정 1440x900). 흰 면 위에: 왼쪽 세리프 내비 4개(Works / About / Library / Contact) + 그 아래 그룹 2개(Engineering = Workflow·Meerkit·Weave, Selected works = 나머지) 목록,
  * 가운데 창(432x740), 오른쪽 "Latest" 카드 스택, 왼쪽 아래 ©연도.
  * 열기/닫기: 흰 프레임 4조각이 사방에서 가운데 창으로 좁혀 들어오고(닫힐 땐 늦게 나감), 내용은 같은 곡선으로 슬라이드한다(측정값은 CSS 상단).
  * 가운데 창은 구멍이다: 그 안에 보이는 것은 지금 페이지 자체(같은 스크롤 위치)다. 사용자 영상 16.0~16.3·25.1~25.4·28.0초에서
@@ -79,6 +80,7 @@ export function MenuOverlay({
   const onWorks = pathname === "/works";
   const onLibrary = pathname === "/library";
   const onContact = pathname === "/contact";
+  const onWorkflow = pathname === "/workflow";
   // 프로젝트 상세 페이지에서 열었다면 지금 보고 있는 프로젝트(그 목업이 창 뒤에서 올라온다). 그 밖의 페이지는 null
   const slugAt = /^\/projects\/([^/]+)\/?$/.exec(pathname)?.[1];
   const current = slugAt ? (projects.find((p) => p.slug === slugAt) ?? null) : null;
@@ -253,6 +255,27 @@ export function MenuOverlay({
               {g.label}
             </p>
             <ul className={styles.list} aria-labelledby={`menu-group-${g.key}`} onPointerLeave={() => setHover(null)}>
+              {/* Engineering 그룹 맨 앞: Workflow 알약. 프로젝트가 아니라 /workflow 페이지로 가므로 내비 항목(About 등)과 같은 전환(창의 장면이 커진 뒤 아래로 빠짐)을 쓴다 */}
+              {g.key === "featured" && (
+                <li>
+                  <HandoffLink
+                    href="/workflow"
+                    tint="indigo"
+                    scene="home"
+                    source="[data-menu-window]"
+                    exit="slide"
+                    framed
+                    onStart={onNav}
+                    className={`pill ${styles.pillLink}`}
+                    data-active={onWorkflow}
+                    aria-current={onWorkflow ? "page" : undefined}
+                    onPointerEnter={() => setHover("workflow")}
+                    onFocus={onKeyFocus("workflow")}
+                  >
+                    {homeCopy.workflow.name}
+                  </HandoffLink>
+                </li>
+              )}
               {g.items.map((p) => (
                 <li key={p.slug}>
                   {/* 알약을 누르면 가운데 창의 목업이 마스크로 열려 상세 히어로로 이어진다(메뉴는 동시에 닫힌다) */}

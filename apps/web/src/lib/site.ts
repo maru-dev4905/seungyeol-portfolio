@@ -47,9 +47,17 @@ export const homeCopy = {
     "Five years in web publishing taught me how interfaces are really built. Now I'm moving into frontend engineering to ship them as products.",
   // 헤드라인 아래 단일 행동 링크(/works로 간다)와 알약 목록 위 힌트 라벨
   cta: "View work",
+  // View work 왼쪽의 보조 버튼(/workflow로 간다). 주 행동(View work)보다 한 단계 약하게 보인다
+  ctaWorkflow: "View workflow",
   hint: "Hover a project",
   // 알약 맨 끝 항목: 눌러서 /works(작업 목록 페이지)로 간다
   allWork: "Works",
   // Works 알약을 올렸을 때 나오는 큰 제목 옆 한 줄 설명
   allWorkTagline: "Starter kits and client work, in one list",
+  // 엔지니어링 그룹 맨 앞 알약(/workflow 페이지로 가는 링크, 프로젝트가 아니라 썸네일 없는 장면). 홈 알약과 메뉴 팝업이 같이 쓴다
+  workflow: {
+    name: "Workflow",
+    tagline: "AI와 함께 일하는 방식 — 규칙·역할·검증을 파일로 설계합니다.",
+    type: "How I work with AI",
+  },
 } as const;

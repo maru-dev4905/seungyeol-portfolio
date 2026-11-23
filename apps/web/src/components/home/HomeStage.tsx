@@ -27,7 +27,19 @@ export type HomeProject = {
 // 썸네일 이미지 폭 힌트(가장 넓은 변형이 화면 폭의 40%). 확대 면도 같은 값으로 첫 그림을 그린다
 const THUMB_SIZES = "40vw";
 
-type Item = { key: string; href: string; name: string; desc: string; type: string | null; tint: Tint; media?: ProjectMedia; thumb: boolean; group: ProjectGroup };
+// variant: 프로젝트는 "프로젝트 순서 % 3"(썸네일 배치 3가지), 페이지 링크(Workflow·Works)는 썸네일 없는 "all". 앞에 페이지 알약이 끼어도 프로젝트의 배치가 밀리지 않게 항목이 자기 값을 들고 있다
+type Item = {
+  key: string;
+  href: string;
+  name: string;
+  desc: string;
+  type: string | null;
+  tint: Tint;
+  media?: ProjectMedia;
+  thumb: boolean;
+  group: ProjectGroup;
+  variant: "0" | "1" | "2" | "all";
+};
 
 // 알약 그룹의 표시 순서와 라벨(메뉴 Case Studies와 같은 값: lib/site.ts의 groupLabels)
 const GROUPS: { key: ProjectGroup; label: string }[] = [
@@ -102,9 +114,21 @@ export function HomeStage({ projects }: { projects: HomeProject[] }) {
     out: null,
   });
 
-  // 알약 순서: featured(Meerkit, Weave) -> selected(나머지 5개) -> Works(selected 그룹의 맨 끝). 데이터(project-data.ts) 순서가 그대로 순서다
+  // 알약 순서: featured(Workflow 페이지 링크, Meerkit, Weave) -> selected(나머지 5개) -> Works(selected 그룹의 맨 끝). 데이터(project-data.ts) 순서가 그대로 순서다
   const items: Item[] = [
-    ...projects.map((p) => ({
+    {
+      key: "workflow",
+      // 엔지니어링 그룹의 첫 알약: 프로젝트가 아니라 /workflow 페이지로 가는 링크(Works 알약처럼 썸네일 없는 장면, 배경은 기본 셰이더)
+      href: "/workflow",
+      name: homeCopy.workflow.name,
+      desc: homeCopy.workflow.tagline,
+      type: homeCopy.workflow.type,
+      tint: "indigo" as Tint,
+      thumb: false,
+      group: "featured" as ProjectGroup,
+      variant: "all" as const,
+    },
+    ...projects.map((p, n) => ({
       key: p.slug,
       href: `/projects/${p.slug}`,
       name: p.shortName,
@@ -114,6 +138,7 @@ export function HomeStage({ projects }: { projects: HomeProject[] }) {
       media: p.media,
       thumb: true,
       group: p.group,
+      variant: String(n % 3) as "0" | "1" | "2",
     })),
     {
       key: "works",
@@ -125,8 +150,12 @@ export function HomeStage({ projects }: { projects: HomeProject[] }) {
       tint: "indigo" as Tint,
       thumb: false,
       group: "selected" as ProjectGroup,
+      variant: "all" as const,
     },
   ];
+
+  // 첫 프로젝트(Meerkit)의 항목 번호: 등장 직후 테두리 강조(힌트)는 페이지 링크가 아니라 이 프로젝트 알약이 받는다
+  const firstProject = items.findIndex((it) => it.thumb);
 
   // 순차 등장 지연(초): 알약 목록은 헤드라인 뒤 1.0초부터 위에서 아래로 0.06초씩(그룹 라벨도 한 칸으로 센다)
   let seq = 0;
@@ -234,8 +263,8 @@ export function HomeStage({ projects }: { projects: HomeProject[] }) {
                         className={`pill ${styles.pill}`}
                         data-active={active === i}
                         data-handoff-link={(it.thumb && wide) || undefined}
-                        data-seq={i === 0 ? "" : undefined}
-                        data-hint={i === 0 || undefined}
+                        data-seq={i === firstProject ? "" : undefined}
+                        data-hint={i === firstProject || undefined}
                         aria-describedby={`preview-desc-${i}`}
                         onPointerEnter={(e) => e.pointerType === "mouse" && setActive(i)}
                         onFocus={() => setActive(i)}
@@ -262,13 +291,22 @@ export function HomeStage({ projects }: { projects: HomeProject[] }) {
                 {homeCopy.headline[1]}
               </span>
             </h1>
-            {/* 홈에서 가장 눈에 띄는 인터랙티브 요소. /works로 가는 일반 링크(페이지 페이드 전환) */}
-            <Link href="/works" className={styles.cta} data-seq style={delay(0.75)}>
-              {homeCopy.cta}
-              <span className={styles.ctaArrow} aria-hidden="true">
-                →
-              </span>
-            </Link>
+            {/* 행동 버튼 두 개(DOM 순서 = 시각 순서 = 포커스 순서): 보조 View workflow(/workflow) -> 주 View work(/works). 둘 다 일반 링크(페이지 페이드 전환).
+                View work는 홈에서 가장 눈에 띄는 꽉 찬 면, View workflow는 같은 크기의 윤곽선 버튼이다. 두 버튼이 같은 단계(0.75s)에 등장한다 */}
+            <div className={styles.actions}>
+              <Link href="/workflow" className={`${styles.cta} ${styles.ctaSecondary}`} data-seq style={delay(0.75)}>
+                {homeCopy.ctaWorkflow}
+                <span className={styles.ctaArrow} aria-hidden="true">
+                  →
+                </span>
+              </Link>
+              <Link href="/works" className={styles.cta} data-seq style={delay(0.75)}>
+                {homeCopy.cta}
+                <span className={styles.ctaArrow} aria-hidden="true">
+                  →
+                </span>
+              </Link>
+            </div>
           </div>
           <p className={styles.intro} data-seq style={delay(1.85)}>
             {homeCopy.intro}
@@ -280,7 +318,7 @@ export function HomeStage({ projects }: { projects: HomeProject[] }) {
           <article
             key={it.key}
             className={styles.preview}
-            data-variant={it.thumb ? i % 3 : "all"}
+            data-variant={it.variant}
             data-on={active === i || undefined}
             style={{ "--tint": `var(${tintToken(it.tint)})` } as CSSProperties}
           >
