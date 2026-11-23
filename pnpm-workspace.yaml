@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# pnpm 10은 보안상 의존성의 설치 스크립트(postinstall)를 기본으로 막는다.
+# create-next-app이 만든 설정을 루트로 옮겨 왔다.
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

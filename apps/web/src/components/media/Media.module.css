@@ -1,0 +1,42 @@
+/* next/image fill의 기준 상자: 부모를 꽉 채우고 넘치는 부분은 자른다 */
+.imageWrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.fill {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 바닥 그림 위에 겹쳐 놓는 층(LoopVideo의 <video>) */
+.overlay {
+  position: absolute;
+  inset: 0;
+}
+
+/* 자리표시: 순검정 바탕 위에 프로젝트 색조(--tint) 한 가지가 번진 면.
+   색 값은 토큰(--tint-*)에서 오고 여기에는 비율만 있다. 두 겹의 타원형 번짐이 위아래로 어긋나 있어 평평하지 않게 보인다. */
+.placeholder {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--media-base);
+  background-image:
+    radial-gradient(70% 55% at 28% 30%, color-mix(in srgb, var(--tint) 78%, transparent), transparent 72%),
+    radial-gradient(60% 45% at 78% 82%, color-mix(in srgb, var(--tint) 40%, transparent), transparent 70%);
+}
+
+.label {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  font-size: 12px;
+  line-height: 14.4px;
+  color: color-mix(in srgb, var(--on-media) 60%, transparent);
+}

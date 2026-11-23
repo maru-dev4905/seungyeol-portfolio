@@ -1,0 +1,64 @@
+/* 맨 위로 버튼. 재질은 전역 .pill(반투명 회색 + blur)을 쓴다. 높이 44는 하단 섹션 알약과 같다.
+   z-index 70: 알약과 같다(메뉴 80·헤더 100 아래). 메뉴가 열리면 아래 규칙으로 숨긴다. */
+.btn {
+  position: fixed;
+  z-index: 70;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  /* 기본: 하단 가운데(알약이 없는 페이지) */
+  left: calc(50% - 22px);
+  width: 44px;
+  height: 44px;
+  justify-content: center;
+  padding: 0;
+  color: var(--hdr-fg);
+  /* 숨김 상태: 투명 + 살짝 아래. 끝난 뒤 포커스·클릭도 막는다 */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition:
+    opacity 0.3s,
+    transform 0.4s var(--ease-out),
+    left 0.4s var(--ease-out),
+    border-color var(--t-fast),
+    background-color var(--t-fast),
+    visibility 0s linear 0.3s;
+}
+
+.btn[data-visible] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+  transition:
+    opacity 0.3s,
+    transform 0.4s var(--ease-out),
+    left 0.4s var(--ease-out),
+    border-color var(--t-fast),
+    background-color var(--t-fast);
+}
+
+/* 알약이 보이면 그 오른쪽 옆(8px 띄움). 알약 폭은 SectionPill이 --section-pill-w로 알려 준다 */
+:global(:root[data-section-pill="on"]) .btn {
+  left: calc(50% + var(--section-pill-w, 220px) / 2 + 8px);
+}
+
+/* 알약 목록이 펼쳐진 동안·메뉴가 열린 동안은 숨긴다(겹침 방지) */
+:global(:root[data-section-pill="open"]) .btn,
+:global(:root[data-menu="open"]) .btn {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.3s,
+    visibility 0s linear 0.3s;
+}
+
+/* 좁은 화면: 알약이 거의 화면 폭이라 옆에 둘 자리가 없다. 알약 위쪽 오른쪽 끝에 둔다 */
+@media (max-width: 520px) {
+  :global(:root[data-section-pill="on"]) .btn {
+    left: auto;
+    right: 16px;
+    bottom: calc(20px + 44px + 8px + env(safe-area-inset-bottom));
+  }
+}

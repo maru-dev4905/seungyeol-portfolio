@@ -1,0 +1,909 @@
+/* About 페이지(Metalab /about 레이아웃, 측정 1440x900). 색·글꼴·반경은 전부 globals.css 토큰(var(--...))만 쓴다.
+   --inset: 4~9번 섹션의 좌우 여백(측정 x140). 화면이 좁아지면 거터(24px)까지 줄어든다. */
+.page {
+  --inset: clamp(24px, 9.72vw, 140px);
+  overflow-x: clip; /* 오버레이 사진이 페이지 가로 스크롤을 만들지 않게(clip은 스크롤 컨테이너를 만들지 않는다) */
+  padding-bottom: 0;
+}
+
+/* 64px 세리프 제목(측정: 64px/76.8, weight 240) */
+.display {
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(40px, 4.44vw, 64px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- 1. 히어로 (가운데 세리프 H1). 지난 라운드에 H1을 80px 상한으로 줄이며 인라인 미디어까지 작아져, 히어로에 한해 다시 키웠다(다른 곳의 큰 글씨 줄이기 방침은 그대로)
+   섹션 높이 = 화면의 80% 이상(min-height 80svh), 내용은 세로 가운데. 위 padding 130px은 고정 헤더 자리 ---------- */
+.hero {
+  min-height: 80svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 130px var(--gutter) 64px; /* 아래 64px: Profile 구분선과의 간격 */
+  text-align: center;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(56px, 7.4vw, 108px); /* 1440에서 약 106px */
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+}
+
+/* 줄 마스크: 안쪽 줄(.heroLine)이 아래에서 올라오며 드러난다. 위아래 .1em 여유를 padding으로 주고 음수 마진으로 돌려 글자·사진이 잘리지 않는다 */
+.heroMask {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.1em;
+  margin-block: -0.1em;
+}
+
+.heroLine {
+  display: block;
+  white-space: nowrap; /* 미디어가 줄 끝에서 따로 떨어지지 않게 한 줄씩 묶는다. 좁은 화면은 아래 미디어 쿼리에서 푼다 */
+}
+
+/* "미디어 + 옆 단어" 묶음: 줄바꿈 때 둘이 갈라지지 않는다 */
+.nb {
+  white-space: nowrap;
+}
+
+/* 인라인 미디어: 가로형 8:5 = 글자 크기에 비례(2.64em x 1.65em, H1 106px에서 약 281x176). 줄마다 위아래로 조금 어긋난다.
+   칸 크기가 em으로 처음부터 정해져 있어 영상·이미지가 늦게 와도 레이아웃이 밀리지 않는다(aspect 8:5 고정) */
+.heroPhoto {
+  display: inline-block;
+  width: 2.64em;
+  height: 1.65em;
+  margin: 0 0.1em;
+  vertical-align: middle;
+  overflow: hidden;
+  position: relative;
+  border-radius: var(--radius-media);
+}
+
+.heroPhoto[data-shift="up"] {
+  transform: translateY(-0.04em);
+}
+.heroPhoto[data-shift="down"] {
+  transform: translateY(0.05em);
+}
+
+/* 좁은 화면(390 등): 글자는 clamp 하한 56px, 미디어는 1.7em x 1.06em(약 95x59)으로 줄이고 줄바꿈을 허용한다(넘쳐서 잘리지 않게) */
+@media (max-width: 560px) {
+  .heroLine {
+    white-space: normal;
+  }
+
+  .heroPhoto {
+    width: 1.7em;
+    height: 1.0625em;
+  }
+}
+
+/* 진입 연출(순수 CSS: 첫 페인트부터 JS 없이 돈다). 줄은 아래 -> 위 마스크 reveal, 사진은 최종 자리를 처음부터 차지한 채 왼쪽 -> 오른쪽으로 펼쳐진다(clip-path) + 안쪽 1.08 -> 1.
+   곡선·길이는 globals.css 토큰(--ease-reveal, --dur-enter). from만 정의하고 backwards로 지연 동안 처음 상태를 유지한다. 지연은 요소마다 인라인 --d */
+@keyframes hero-line {
+  from {
+    transform: translateY(110%);
+  }
+}
+
+@keyframes hero-photo {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+@keyframes hero-photo-in {
+  from {
+    transform: scale(1.08);
+  }
+}
+
+.hero .heroLine[data-seq] {
+  animation: hero-line calc(var(--dur-enter) + 0.1s) var(--ease-reveal) backwards;
+  animation-delay: var(--d, 0s);
+}
+
+.hero .heroPhoto[data-seq] {
+  animation: hero-photo calc(var(--dur-enter) + 0.1s) var(--ease-reveal) backwards;
+  animation-delay: var(--d, 0s);
+}
+
+.hero .heroPhoto[data-seq] > * {
+  animation: hero-photo-in 1.6s var(--ease-reveal) backwards;
+  animation-delay: var(--d, 0s);
+}
+
+/* 전환(커튼) 중에는 끝날 때까지 처음 상태에서 멈춘다(AboutHero의 useSeqHold가 data-seq-hold를 건다) */
+.hero[data-seq-hold] [data-seq],
+.hero[data-seq-hold] [data-seq] > * {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero [data-seq],
+  .hero [data-seq] > * {
+    animation: none !important;
+  }
+}
+
+/* ---------- 2. Profile 블록(에디토리얼 프로필 카드) ----------
+   12열 그리드: 왼쪽 4열 사진(3:4) / 5열은 빈 여백 / 오른쪽 6~12열 정보. 카드·테두리 상자 없이 헤어라인과 여백으로만 나눈다.
+   위계 = 이름(60px) > 한 줄 문구(26px) > 정의 목록(16px) > 요약(17px) > 링크. 큰 글자·숫자·겹침 없음 */
+.profile {
+  padding: 0 var(--inset);
+  margin-top: 0; /* 히어로가 아래 padding(64px)으로 간격을 준다 */
+}
+
+.profileRule {
+  margin-bottom: 32px;
+}
+
+.profileGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: start;
+}
+
+/* 사진: 4열 폭의 3:4. 정보 열이 더 길어서, 스크롤하는 동안 위쪽(헤더 아래)에 붙어 따라온다(sticky: transform이 아니라 브라우저 기본 배치) */
+.profilePhoto {
+  grid-column: 1 / 5;
+  position: sticky;
+  top: 96px;
+}
+
+/* 이미지 틀(clip-path로 열리는 면) */
+.profileFrame {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: var(--radius-media);
+}
+
+.profileInfo {
+  grid-column: 6 / 13;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.profileTag {
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+}
+
+/* 영문 이름(메인) + 국문 이름: 같은 기준선에 나란히, 좁아지면 아래로 내려간다 */
+.profileNameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 16px;
+  margin-top: 14px;
+}
+
+.profileName {
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(40px, 4.2vw, 60px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.profileNameKo {
+  font-size: 18px;
+  line-height: 1.2;
+  color: var(--fg-muted);
+}
+
+.profileHeadline {
+  max-width: 600px;
+  margin-top: 22px;
+  text-wrap: balance; /* 마지막 줄에 한 단어만 남지 않게 줄 길이를 고르게 */
+  font-size: clamp(22px, 1.8vw, 26px);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+/* 정의 목록: 행마다 위 헤어라인, 마지막 행은 아래에도(표처럼 닫힌다). 라벨 열 고정폭이라 값이 한 줄로 정렬된다 */
+.facts {
+  align-self: stretch;
+  margin-top: 28px;
+  border-bottom: 1px solid var(--line-row);
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: var(--gutter);
+  align-items: baseline;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-row);
+}
+
+.fact dt {
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+}
+
+.fact dd {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.profileSummary {
+  max-width: 560px;
+  margin-top: 32px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--fg-body);
+}
+
+.profileLinks {
+  display: flex;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.profileLink {
+  height: 32px;
+  padding: 0 16px;
+  line-height: 30px;
+  font-size: 14px;
+  font-weight: 350;
+}
+
+/* ---------- 2-1. 취미 섹션(Metalab "Diverse perspectives" 구성 + 천천히 흐르는 사진 트랙) ----------
+   --sh = 섹션 높이. 사진 높이·위치는 이 높이에 대한 비율(lib/about.ts hobbies)이라 화면이 바뀌어도 모양이 같다.
+   한 칸(grid)에 트랙·라벨·헤드라인을 겹쳐 쌓는다(z-index로 글자가 사진 위) */
+.hobby {
+  --sh: clamp(520px, 50vw, 720px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: var(--sh);
+  margin-top: 160px;
+  position: relative;
+}
+
+.hobby > * {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* 트랙이 흘러나가는 창: 섹션 폭 그대로 자른다(가로 스크롤을 만들지 않는다) */
+.hobbyViewport {
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* 트랙: 사진을 가로로 잇는다. max-content라 폭 = 사진 두 묶음의 합. 움직임(translate3d)은 HobbyTrack가 건다 */
+.hobbyTrack {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  will-change: transform;
+}
+
+/* 사진 한 칸: 높이 = 섹션 높이 x h, 폭 = 높이 x ratio, 위 간격 = 섹션 높이 x top. 사이 간격은 margin이라 두 묶음의 길이가 정확히 같다 */
+.hobbyItem {
+  position: relative;
+  flex: none;
+  height: calc(var(--sh) * var(--h));
+  width: calc(var(--sh) * var(--h) * var(--ratio));
+  margin-top: calc(var(--sh) * var(--top));
+  margin-right: 24px;
+  overflow: hidden;
+  border-radius: var(--radius-media);
+}
+
+.hobbyImg {
+  object-fit: cover;
+}
+
+/* 어둡게 덮는 면: 바탕 토큰(--bg) 색을 사진마다 다른 투명도(--dim)로 얹는다. 위의 흰 헤드라인이 어느 사진 위에서도 읽히게 한다 */
+.hobbyDim {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  opacity: var(--dim);
+}
+
+.hobbyTag {
+  align-self: start;
+  justify-self: start;
+  position: relative;
+  z-index: 2;
+  padding: 24px var(--inset) 0;
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg); /* 사진 위라 회색 대신 흰색(대비 측정: 본문 --fg-body는 최악 4.1:1이라 부족했다) */
+}
+
+.hobbyTitle {
+  align-self: center;
+  justify-self: center;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(36px, 4.4vw, 64px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  pointer-events: none; /* 글자 밑 사진은 클릭할 것이 없지만, 커서 효과가 막히지 않게 */
+}
+
+/* ---------- 3. 경력 원장(ledger)형 표 ---------- */
+.career {
+  position: relative;
+  z-index: 1;
+}
+
+.careerHead {
+  padding: 0 var(--inset);
+  margin-top: 200px;
+}
+
+/* 섹션 구분선(RevealGroup이 왼쪽 -> 오른쪽으로 그린다). 제목과의 간격 */
+.rule {
+  margin-bottom: 32px;
+}
+
+.count {
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0;
+  vertical-align: super;
+  color: var(--fg-muted);
+}
+
+.ledger {
+  margin: 56px -16px 0; /* 행 안쪽 여백(16px)만큼 넓혀 글자는 제목과 줄이 맞고 hover 배경만 바깥으로 번진다 */
+}
+
+/* 행 공통 칸 배치: No. / 회사명 / 기간 / 재직 기간. 머리 줄과 데이터 행이 같은 열 폭을 쓴다 */
+.ledgerHead,
+.ledgerRow {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 220px 140px 32px;
+  column-gap: var(--gutter);
+  align-items: baseline;
+  padding: 0 16px;
+}
+
+.ledgerHead {
+  padding-bottom: 12px;
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+  border-bottom: 1px solid var(--line-row);
+}
+
+.ledgerRow {
+  width: 100%;
+  padding-top: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line-row);
+  transition: background-color var(--t-fast) var(--ease-out-cubic);
+}
+
+.ledgerNo,
+.ledgerPeriod,
+.ledgerTenure {
+  font-size: 16px;
+  line-height: 22.4px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ledgerName {
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(28px, 3.33vw, 48px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  transition: transform 0.4s var(--ease-out-cubic);
+}
+
+.ledgerTenure {
+  text-align: right;
+}
+
+/* 누르면 경력 상세 드로어가 열리는 행(<button>). 버튼 기본 모양을 지우고 행처럼 보이게 한다 */
+.ledgerBtn {
+  text-align: left;
+  color: inherit;
+}
+
+.ledgerBtn:focus-visible {
+  outline-offset: -2px;
+}
+
+/* + 아이콘(눌러서 열 수 있다는 표시): 지름 32 원 테두리 안의 가로·세로 막대. 행 오른쪽 끝, 글자 첫 줄에 맞춘다 */
+.ledgerPlus {
+  position: relative;
+  justify-self: end;
+  align-self: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  transition:
+    background-color 0.4s var(--ease-reveal),
+    border-color 0.4s var(--ease-reveal),
+    transform 0.5s var(--ease-reveal);
+}
+
+.ledgerPlus::before,
+.ledgerPlus::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 1px;
+  margin: -0.5px 0 0 -6px;
+  background: var(--fg);
+  transition: background-color 0.4s var(--ease-reveal);
+}
+
+.ledgerPlus::after {
+  transform: rotate(90deg);
+}
+
+/* JS가 꺼졌을 때 보이는 정적 상세(평소엔 숨김). 행 아래에 펼쳐진 채 읽힌다. 켜는 규칙은 CareerLedger의 noscript 스타일 */
+.ledgerStatic {
+  display: none;
+  padding: 8px 0 40px 88px;
+  border-bottom: 1px solid var(--line-row);
+}
+
+/* hover/키보드 포커스: 행 배경이 미세하게 밝아지고 회사명이 오른쪽으로 조금 밀리며 + 가 채워진 원이 되어 돈다(눌러서 열 수 있다는 신호).
+   hover는 마우스가 있는 환경에서만 */
+@media (hover: hover) {
+  .ledgerBtn:hover {
+    background-color: var(--row-hover);
+  }
+
+  .ledgerBtn:hover .ledgerName {
+    transform: translateX(14px);
+  }
+
+  .ledgerBtn:hover .ledgerPlus {
+    background-color: var(--fg);
+    border-color: var(--fg);
+    transform: rotate(90deg);
+  }
+
+  .ledgerBtn:hover .ledgerPlus::before,
+  .ledgerBtn:hover .ledgerPlus::after {
+    background: var(--bg);
+  }
+}
+
+.ledgerBtn:focus-visible .ledgerPlus {
+  background-color: var(--fg);
+  border-color: var(--fg);
+}
+
+.ledgerBtn:focus-visible .ledgerPlus::before,
+.ledgerBtn:focus-visible .ledgerPlus::after {
+  background: var(--bg);
+}
+
+/* ---------- 4. 소개 선언문: 스크롤에 따라 단어가 채워지는 큰 문장 + 아래 2열(왼쪽 라벨 / 오른쪽 한글) ---------- */
+.statementWrap {
+  padding: 0 var(--inset);
+  margin-top: 240px;
+}
+
+.statement {
+  max-width: 1160px;
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(32px, 4.44vw, 64px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* 선언문 바로 아래 한글 원문 한 줄 */
+.statementLine {
+  margin-top: 32px;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+/* 2열 비대칭: 왼쪽 좁은 라벨 칸, 오른쪽에서 시작하는 한글 문단 */
+.introduce {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  column-gap: var(--gutter);
+  margin-top: 72px;
+  align-items: start;
+}
+
+.introduceTag {
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+}
+
+.introduceWho {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+}
+
+.statementKo {
+  max-width: 640px;
+  display: grid;
+  gap: 20px;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+/* ---------- 5. 스킬 아코디언 (측정: 왼쪽 64px 2줄 x140, 오른쪽 x604 w580~696, 항목 81px, 1px 구분선) ---------- */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 440px) minmax(0, 1fr); /* 오른쪽 목록 x604~1300(폭 696) */
+  column-gap: var(--gutter);
+  padding: 0 var(--inset);
+  margin-top: 200px;
+  align-items: start;
+  --sticky-top: 120px; /* 고정 헤더(54px + 위 12px) 아래 여유 */
+}
+
+/* 스킬 섹션 구분선: 2열 격자의 첫 줄 전체를 쓴다 */
+.splitRule {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+/* 왼쪽 제목: 목록 칸(.split) 안에서만 위쪽에 붙어 따라온다. 조상(.page)은 overflow-x: clip이라 sticky가 살아 있다 */
+.skillsTitle {
+  position: sticky;
+  top: var(--sticky-top);
+  align-self: start;
+  padding-top: 24px; /* 위 구분선(Rule)에 제목이 붙어 보이지 않게 간격. sticky top 값은 그대로 */
+}
+
+/* 위 구분선은 섹션 구분선(.splitRule)이 대신한다 */
+.acc {
+  margin: 0;
+}
+
+.accItem {
+  border-bottom: 1px solid var(--line);
+}
+
+.accHead {
+  font: inherit;
+}
+
+.accBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  min-height: 80px; /* 항목 높이 81 = 80 + 구분선 1 */
+  padding: 0;
+  text-align: left;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.accBtn:focus-visible {
+  outline-offset: -2px;
+}
+
+/* + 아이콘: 가로 막대 + 세로 막대. 열리면 세로 막대가 90도 돌아 가로 막대와 겹쳐 −가 된다 */
+.accIcon {
+  position: relative;
+  flex: none;
+  width: 12px;
+  height: 12px;
+}
+
+.accIcon::before,
+.accIcon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 5.5px;
+  width: 12px;
+  height: 1px;
+  background: currentColor;
+  transition: transform 0.5s var(--ease-reveal);
+}
+
+.accIcon::after {
+  transform: rotate(90deg);
+}
+
+.accItem[data-open] .accIcon::after {
+  transform: rotate(0deg);
+}
+
+/* 본문 칸: 0fr -> 1fr로 높이가 부드럽게 열린다. 닫힌 동안은 visibility로 포커스·읽기에서 뺀다.
+   타이밍은 페이지 전체 모션 문법에 맞춘 0.5s + --ease-reveal(power3.out). 열릴 때 본문이 24px 대신 12px 올라오며 페이드 인한다(.accBody) */
+.accPanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.5s var(--ease-reveal),
+    visibility 0s linear 0.5s;
+}
+
+.accItem[data-open] .accPanel {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows 0.5s var(--ease-reveal);
+}
+
+.accPanelInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.accBody {
+  display: grid;
+  gap: 16px;
+  padding: 0 40px 32px 0;
+  font-size: 16px;
+  line-height: 22.4px;
+  color: var(--fg-muted); /* 측정 rgb(121,118,122) */
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.3s var(--ease-reveal),
+    transform 0.5s var(--ease-reveal);
+}
+
+.accItem[data-open] .accBody {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.12s; /* 높이가 열리기 시작한 뒤 본문이 따라 올라온다 */
+}
+
+.accBody p + p {
+  margin-top: 4px;
+}
+
+/* ---------- 6. 푸터 (측정: H1 88px/103.84 x24 두 줄, 오른쪽 링크 x736, 맨 아래 © ) ---------- */
+.footer {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  padding: 240px var(--gutter) 24px;
+  row-gap: 120px;
+  position: relative; /* 구분선(.footerRule)을 맨 위에 붙이기 위한 기준 */
+  margin-top: 120px;
+}
+
+/* 푸터 위 구분선(예전 border-top): 전체 폭으로 왼쪽 -> 오른쪽으로 그려진다 */
+.footerRule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.footerTitleBox {
+  grid-column: 1 / 7;
+}
+
+.footerTitle {
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(40px, 4.44vw, 64px); /* 큰 글자를 줄이라는 요청에 따라 88 -> 64 */
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+
+.footerLine {
+  display: block;
+}
+
+.footerBody {
+  max-width: 420px;
+  margin-top: 32px;
+  color: var(--fg-muted);
+}
+
+.footerLinks {
+  grid-column: 7 / 13; /* 측정 x736 */
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.footerPill {
+  height: 32px;
+  padding: 0 16px;
+  line-height: 30px;
+  font-weight: 350;
+}
+
+.footerEnd {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  color: var(--fg-muted);
+  font-size: 16px;
+  line-height: 22.4px;
+}
+
+/* ---------- 모바일 (390: 한 열, 여백 16) ---------- */
+@media (max-width: 768px) {
+  .page {
+    --inset: 16px;
+  }
+
+  /* 히어로: 글자는 기본 clamp 하한(56px)을 그대로 쓰고, 넘침은 줄바꿈 허용(560px 이하 규칙)으로 막는다. 아래 48px이 Profile과의 간격 */
+  .hero {
+    padding: 120px 16px 48px;
+  }
+
+  /* Profile: 한 열. 사진이 위, 정보가 아래 */
+
+  .profileRule {
+    margin-bottom: 24px;
+  }
+
+  .profileGrid {
+    display: block;
+  }
+
+  .profilePhoto {
+    position: static; /* 한 열이라 따라오지 않는다. 폭은 열 전체(3:4) */
+  }
+
+  .profileInfo {
+    margin-top: 28px;
+  }
+
+  .profileHeadline {
+    margin-top: 20px;
+    font-size: 22px;
+  }
+
+  .facts {
+    margin-top: 28px;
+  }
+
+  .fact {
+    grid-template-columns: 92px minmax(0, 1fr);
+    column-gap: 16px;
+  }
+
+  .profileSummary {
+    margin-top: 24px;
+    font-size: 16px;
+  }
+
+  .profileLinks {
+    margin-top: 24px;
+  }
+
+  /* 취미: 사진 2장쯤 보이는 높이 */
+  .hobby {
+    --sh: 420px;
+    margin-top: 96px;
+  }
+
+  .hobbyTag {
+    padding: 16px 16px 0;
+  }
+
+  .careerHead {
+    margin-top: 96px;
+  }
+
+  .ledger {
+    margin-top: 40px;
+  }
+
+  /* 모바일: 2줄 행. 1줄 = No. + 회사명 / 2줄 = 기간 + 재직 기간. + 아이콘은 오른쪽 끝에서 두 줄에 걸친다 */
+  .ledgerHead {
+    display: none;
+  }
+
+  .ledgerRow {
+    grid-template-columns: 40px minmax(0, 1fr) auto 32px;
+    grid-template-areas:
+      "no name name plus"
+      ".  period tenure plus";
+    row-gap: 6px;
+    column-gap: 12px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  .ledgerNo {
+    grid-area: no;
+  }
+  .ledgerName {
+    grid-area: name;
+    font-size: 28px;
+  }
+  .ledgerPeriod {
+    grid-area: period;
+    font-size: 14px;
+  }
+  .ledgerTenure {
+    grid-area: tenure;
+    font-size: 14px;
+  }
+  .ledgerPlus {
+    grid-area: plus;
+  }
+  .ledgerStatic {
+    padding-left: 52px;
+  }
+
+  .statementWrap {
+    margin-top: 120px;
+  }
+
+  .introduce {
+    display: block;
+    margin-top: 40px;
+  }
+
+  .statementKo {
+    margin-top: 24px;
+  }
+
+  .split {
+    display: block;
+    margin-top: 120px;
+  }
+
+  /* 모바일은 세로 스택이라 sticky를 푼다 */
+  .skillsTitle {
+    position: static;
+    padding-top: 16px;
+  }
+
+  .acc {
+    margin-top: 40px;
+  }
+
+  .accBody {
+    padding-right: 0;
+  }
+
+  .footer {
+    display: block;
+    padding: 120px 16px 24px;
+  }
+
+  .footerLinks {
+    margin: 48px 0 80px;
+  }
+
+  .footerEnd {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

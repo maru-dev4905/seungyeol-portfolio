@@ -1,0 +1,344 @@
+/* Career 상세 모달 + 경력 내용 본문. 색·반경·곡선은 globals.css 토큰(var(--...))만 쓴다.
+   위치: 화면 정중앙(top/left 50% + translate). 모션: 화면 아래 바깥에서 올라와 가운데에 멈춘다(열기 0.6s, 닫기 0.45s, --ease-reveal).
+   데스크톱·모바일 모두 같은 중앙 모달이고 크기만 다르다(바텀시트·사이드 패널 없음). */
+
+/* ---------- 드로어 ---------- */
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 120; /* 고정 헤더(100)·알약(70) 위, 커서(1000) 아래 */
+}
+
+/* 배경 dim: 모달이 올라오는 동안 같이 페이드(열 때 0.6s, 닫을 때 0.45s) */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  opacity: 0;
+  transition: opacity 0.45s var(--ease-reveal);
+}
+
+/* 모달: 정중앙 고정(translate -50%). 닫힌 상태는 화면 높이(100vh)만큼 아래로 내려가 화면 밖이다.
+   안쪽은 flex 열: 위쪽 바 고정 + 본문만 스크롤. overflow hidden은 둥근 모서리(12px) 밖으로 내용이 삐져나가지 않게 한다 */
+.panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(720px, 90vw);
+  height: min(80svh, 760px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-modal);
+  transform: translate(-50%, calc(-50% + 100vh));
+  transition: transform 0.45s var(--ease-reveal); /* 닫기: 아래로 내려감 */
+}
+
+.root[data-state="open"] .backdrop {
+  opacity: 1;
+  transition-duration: 0.6s;
+}
+
+.root[data-state="open"] .panel {
+  transform: translate(-50%, -50%);
+  transition-duration: 0.6s; /* 열기: 아래에서 올라와 가운데에 멈춤 */
+}
+
+/* 위쪽 바: 안쪽 스크롤과 무관하게 고정(닫기 버튼이 항상 보인다) */
+.bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--surface-line);
+}
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.close {
+  height: 32px;
+  padding: 0 16px;
+  line-height: 30px;
+  font-size: 14px;
+}
+
+/* 모달 안에서만 스크롤. overscroll-behavior: 끝에 닿아도 뒤 페이지로 스크롤이 번지지 않는다 */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 40px 32px 64px;
+}
+
+/* 열릴 때 안쪽 블록이 위에서 아래로 스태거로 올라온다(같은 문법: 24px, 0.08s 간격). 모달이 올라오는 도중(0.2s)부터 */
+.stage {
+  display: grid;
+  gap: 32px;
+}
+
+.stage .detail {
+  display: contents; /* 본문 블록들이 .stage의 칸이 되어 한 줄로 스태거된다 */
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--distance));
+  }
+}
+
+.root[data-state="open"] .stage > * {
+  animation: drawer-in var(--dur-enter) var(--ease-reveal) backwards;
+  animation-delay: calc(0.2s + var(--i, 0) * var(--stagger));
+}
+
+.stage > :nth-child(1) { --i: 0; }
+.stage > :nth-child(2) { --i: 1; }
+.stage > :nth-child(3) { --i: 2; }
+.stage > :nth-child(4) { --i: 3; }
+.stage > :nth-child(5) { --i: 4; }
+.stage > :nth-child(6) { --i: 5; }
+.stage > :nth-child(7) { --i: 6; }
+.stage > :nth-child(8) { --i: 7; }
+
+.head {
+  display: grid;
+  gap: 8px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(40px, 4vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.meta {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.contact {
+  padding-top: 24px;
+  border-top: 1px solid var(--surface-line);
+  font-size: 14px;
+  color: var(--fg-muted);
+}
+
+.contactLink {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line);
+}
+
+/* ---------- 경력 본문(드로어 안, JS 꺼졌을 때 행 아래 정적 복사본에서 같이 쓴다) ---------- */
+.detail {
+  display: grid;
+  gap: 32px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-body);
+  word-break: keep-all;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--surface-line);
+}
+
+.facts dt {
+  font-size: 12px;
+  line-height: 14.4px;
+  color: var(--fg-muted);
+}
+
+.facts dd {
+  margin-top: 4px;
+  color: var(--fg);
+}
+
+.summary {
+  font-size: 20px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.block {
+  display: grid;
+  gap: 12px;
+}
+
+.sub {
+  font-size: 12px;
+  line-height: 14.4px;
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+.bullets {
+  display: grid;
+  gap: 10px;
+}
+
+.bullets li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.bullets li::before,
+.steps li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.75em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--fg-muted);
+}
+
+.bullets strong,
+.steps strong,
+.lesson strong {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* 대표 프로젝트 카드(WEAVE): 한 단계 떠 보이는 면 */
+.project {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  background: var(--code-bg);
+  border-radius: var(--radius-media);
+}
+
+.projectTitle {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.projectMeta {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+.projectLink {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.steps {
+  display: grid;
+  gap: 12px;
+}
+
+.steps li {
+  position: relative;
+  padding-left: 18px;
+}
+
+/* 성과 지표 칩 */
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.metrics li {
+  display: grid;
+  gap: 2px;
+  padding: 14px 18px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-media);
+}
+
+.metricValue {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--fg);
+}
+
+.metricLabel {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--fg-muted);
+}
+
+.lesson {
+  padding-left: 16px;
+  border-left: 2px solid var(--timeline-accent);
+}
+
+/* ---------- 모바일(<=768px): 같은 중앙 모달, 폭만 화면에서 12px씩 띄운다 ---------- */
+@media (max-width: 768px) {
+  .panel {
+    width: calc(100vw - 24px);
+    height: min(86svh, 720px);
+  }
+
+  .bar {
+    padding: 12px 16px;
+  }
+
+  .scroll {
+    padding: 28px 16px 48px;
+  }
+
+  .facts {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* 움직임 줄이기: 올라오기·스태거 없이 가운데에서 투명도만 0.25초(전역 reduced 규칙의 0.01ms를 이 요소에서만 덮는다) */
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .root[data-state="open"] .panel {
+    transform: translate(-50%, -50%);
+  }
+
+  .panel {
+    opacity: 0;
+    transition: opacity 0.25s linear !important;
+  }
+
+  .root[data-state="open"] .panel {
+    opacity: 1;
+  }
+
+  .backdrop {
+    transition: opacity 0.25s linear !important;
+  }
+
+  .root[data-state="open"] .stage > * {
+    animation: none !important;
+  }
+}

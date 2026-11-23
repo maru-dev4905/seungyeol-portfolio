@@ -1,0 +1,354 @@
+/* Works 페이지. 좌표·글자는 metalab.com/work 측정값(1440x900, 모바일 390x844)을 따른다.
+   색은 전부 토큰(--fg, --fg-muted, --line-row, --row-hover). 5열 격자는 측정한 x좌표(24 / 256 / 716 / 1009 / 1225)의 폭 비율이다. */
+.page {
+  min-height: 100svh;
+  padding-bottom: 160px;
+}
+
+/* ---------- 제목 (측정: x24 y121, 세리프 88px/103.84 weight 240, 자간 -1.76px) ---------- */
+.hero {
+  padding: 121px var(--gutter) 0;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(56px, 6.11vw, 88px);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+}
+
+/* ---------- 필터 (측정: nav y450 높이 72 padding 24, "Filter By:" 16px, 알약 높이 24 / 좌우 16 / 간격 3) ---------- */
+.filterNav {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 라벨 끝 84 -> 첫 알약 94 */
+  padding: 24px var(--gutter);
+  margin-top: 121px; /* 제목 끝 329 -> nav 450 */
+}
+
+.filterLabel {
+  font-size: 16px;
+  line-height: 22.4px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.chip {
+  height: 24px;
+  padding: 0 16px;
+  font-size: 16px;
+  line-height: 22px; /* 1px 테두리 2px을 빼서 높이를 24px로 맞춘다 */
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* ---------- 행 (측정: 높이 200, padding 40 24 80, 아래 1px 구분선, hover 배경 rgb(23,23,23) 0.4초) ---------- */
+.rows {
+  border-top: 0;
+}
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 232fr 460fr 293fr 216fr 191fr;
+  align-items: start;
+  min-height: 200px;
+  padding: 40px var(--gutter) 80px;
+  border-bottom: 1px solid var(--line-row);
+  transition: background-color 0.4s;
+}
+
+.row:hover,
+.row:focus-within {
+  background-color: var(--row-hover);
+}
+
+.name {
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding-right: 24px;
+}
+
+/* 이름 링크의 ::after가 행 전체를 덮어 행 어디를 눌러도 이동한다(링크는 이름 하나라 스크린 리더에는 한 번만 읽힌다) */
+.rowLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.rowLink:focus-visible {
+  outline: none; /* 행 배경이 포커스 표시를 대신한다 */
+}
+
+/* 설명 (측정: x256 폭 407, 16px/22.4) */
+.desc {
+  max-width: 407px;
+  font-size: 16px;
+  line-height: 22.4px;
+  letter-spacing: -0.01em;
+}
+
+/* 썸네일 (측정: x716 폭 240 높이 160, 행 위에서 40px). hover/focus 때만 나타난다 */
+.thumb {
+  width: 240px;
+  height: 160px;
+  border-radius: var(--radius-media);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.row:hover .thumb,
+.row:focus-within .thumb {
+  opacity: 1;
+}
+
+/* 태그 (측정: x1009 폭 191, 회색 16px, 줄 간격 32) */
+.tags {
+  color: var(--fg-muted);
+  font-size: 16px;
+  line-height: 22.4px;
+  letter-spacing: -0.01em;
+  display: grid;
+  gap: 9.6px;
+}
+
+/* View project (측정: x1225, 흰색 밑줄, hover 때만) */
+.view {
+  font-size: 16px;
+  line-height: 22.4px;
+  letter-spacing: -0.01em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.row:hover .view,
+.row:focus-within .view {
+  opacity: 1;
+}
+
+/* ---------- Archive ---------- */
+.archive {
+  margin-top: 160px;
+}
+
+.archiveTitle {
+  padding: 0 var(--gutter);
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(48px, 4.4vw, 64px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.archiveCountNote {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--fg-muted);
+  vertical-align: top;
+}
+
+.archiveIntro {
+  padding: 16px var(--gutter) 0;
+  color: var(--fg-muted);
+}
+
+.archive .filterNav {
+  margin-top: 48px;
+}
+
+.archiveCount {
+  padding: 0 var(--gutter) 16px;
+  color: var(--fg-muted);
+}
+
+.archiveRows {
+  border-top: 1px solid var(--line-row);
+}
+
+.archiveRow {
+  display: grid;
+  grid-template-columns: 450fr 320fr 300fr 216fr 191fr;
+  font-size: 14px;
+  align-items: baseline;
+  padding: 16px var(--gutter);
+  border-bottom: 1px solid var(--line-row);
+}
+
+.archiveName {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding-right: 24px;
+}
+
+.archiveRole,
+.archiveYear {
+  font-size: inherit; /* 행의 font-size(14px)를 따른다 */
+  line-height: 1.4;
+}
+
+.archiveCat {
+  color: var(--fg-muted);
+}
+
+.archiveLink a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- 끝 ---------- */
+.end {
+  margin-top: 160px;
+  padding: 0 var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.end a {
+  height: 32px;
+  padding: 0 16px;
+  line-height: 30px;
+}
+
+/* ---------- 모바일 (측정 390x844: 제목 44px/51.92, 라벨 14px, 알약 높이 32, 행은 한 열: 이름 -> 이미지 -> 설명 14px -> 태그 -> View 밑줄) ---------- */
+@media (max-width: 768px) {
+  .hero {
+    padding: 104px 16px 0;
+  }
+
+  .title {
+    font-size: 44px;
+    line-height: 51.92px;
+  }
+
+  .filterNav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 24px 16px;
+    margin-top: 64px;
+  }
+
+  .filterLabel {
+    font-size: 14px;
+    line-height: 19.6px;
+  }
+
+  /* 알약이 많아도 줄바꿈 대신 가로로 밀어서 본다(측정: 한 줄) */
+  .chips {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 3px;
+  }
+
+  .chip {
+    flex: none;
+    height: 32px;
+    line-height: 30px;
+  }
+
+  .row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 40px 16px 56px;
+    min-height: 0;
+  }
+
+  .name {
+    order: 1;
+    padding-right: 0;
+  }
+
+  /* 터치에는 hover가 없으므로 이미지와 링크 문구가 항상 보인다 */
+  .thumb {
+    order: 2;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 358 / 190;
+    opacity: 1;
+  }
+
+  .desc {
+    order: 3;
+    font-size: 14px;
+    line-height: 19.6px;
+  }
+
+  .tags {
+    order: 4;
+    display: block;
+    font-size: 14px;
+    line-height: 19.6px;
+  }
+
+  .tags li {
+    display: inline;
+  }
+
+  .tags li:not(:last-child)::after {
+    content: ", ";
+  }
+
+  .view {
+    order: 5;
+    align-self: flex-start;
+    font-size: 14px;
+    opacity: 1;
+  }
+
+  .archive {
+    margin-top: 96px;
+  }
+
+  .archiveTitle,
+  .archiveIntro,
+  .archiveCount,
+  .end {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .archiveRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+    padding: 20px 16px;
+  }
+
+  .archiveName {
+    grid-column: 1 / -1;
+    padding-right: 0;
+  }
+
+  .archiveRole,
+  .archiveYear,
+  .archiveCat,
+  .archiveLink {
+    font-size: 14px;
+    line-height: 19.6px;
+  }
+
+  .archiveLink {
+    grid-column: 1 / -1;
+  }
+}

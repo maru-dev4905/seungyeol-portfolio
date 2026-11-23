@@ -1,0 +1,194 @@
+/* 타임라인(우측 목차·상세 날짜 표·About 경력이 같이 쓴다). 값은 globals.css 토큰만 쓴다(D-016).
+   구조: li 하나 = 노드(원) + 제목 + 메타. 선은 li마다 "이 노드 중심 -> 다음 노드 중심" 한 토막씩이라, 항목 높이가 달라도 선이 어긋나지 않는다.
+   --tl-top은 첫 줄 글자의 세로 중심에 노드를 맞추는 값(변형마다 줄 높이가 달라 따로 둔다). */
+.timeline {
+  --tl-node: 18px; /* 노드 지름 */
+  --tl-gap: 14px; /* 노드와 글자 사이 */
+  --tl-space: 22px; /* 항목 사이 간격 */
+  --tl-line: 20px; /* 제목 한 줄의 높이 */
+  --tl-top: calc((var(--tl-line) - var(--tl-node)) / 2);
+  --tl-dur: 0.3s;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  position: relative;
+  padding-bottom: var(--tl-space);
+}
+
+.item:last-child {
+  padding-bottom: 0;
+}
+
+/* 선 한 토막: 이 노드 중심 -> 다음 노드 중심. 바탕 선(::before)은 --line, 진행 선(::after)은 강조색이 위에서 아래로 채워진다 */
+.item::before,
+.item::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--tl-node) / 2 - 0.5px);
+  top: calc(var(--tl-top) + var(--tl-node) / 2);
+  width: 1px;
+  height: 100%;
+}
+
+.item::before {
+  background: var(--line);
+}
+
+.item::after {
+  background: var(--timeline-accent);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform var(--tl-dur) ease;
+}
+
+.item[data-passed]::after {
+  transform: scaleY(1);
+}
+
+.item:last-child::before,
+.item:last-child::after {
+  display: none; /* 마지막 노드 아래로는 선이 이어지지 않는다 */
+}
+
+.body {
+  position: relative;
+  display: block;
+  padding-left: calc(var(--tl-node) + var(--tl-gap));
+  color: inherit;
+}
+
+/* 노드: 기본은 빈 원 테두리(안은 바탕색이라 뒤의 선이 비치지 않는다). 지나간 항목은 테두리가 강조색, 현재 항목은 채워진 원 + 굵은 링 */
+.node {
+  position: absolute;
+  left: 0;
+  top: var(--tl-top);
+  box-sizing: border-box;
+  width: var(--tl-node);
+  height: var(--tl-node);
+  border: 1.5px solid var(--fg-sub);
+  border-radius: 50%;
+  background: var(--bg);
+  transition:
+    border-color var(--tl-dur) ease,
+    border-width var(--tl-dur) ease,
+    background-color var(--tl-dur) ease,
+    box-shadow var(--tl-dur) ease;
+}
+
+.item[data-passed] .node {
+  border-color: var(--timeline-accent);
+}
+
+.item[data-current] .node {
+  border: 4px solid var(--timeline-accent);
+  background: var(--fg);
+}
+
+.title {
+  display: block;
+  font-size: 15px;
+  line-height: var(--tl-line);
+  color: var(--fg-sub);
+  transition: color var(--tl-dur) ease;
+}
+
+.item[data-current] .title {
+  color: var(--fg);
+}
+
+a.body:hover .title {
+  color: var(--fg);
+}
+
+.meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+a.body:focus-visible {
+  outline-offset: 4px;
+  border-radius: var(--radius-small);
+}
+
+/* ---------- 변형: toc(우측 목차) ---------- */
+.timeline[data-variant="toc"] {
+  --tl-node: 16px;
+  --tl-space: 20px;
+}
+
+.timeline[data-variant="toc"] .title {
+  font-size: 14px;
+}
+
+/* ---------- 변형: log(상세 본문의 날짜 표: 사건 문장이 제목, 날짜가 메타) ---------- */
+.timeline[data-variant="log"] {
+  --tl-line: 26px;
+  --tl-space: 22px; /* 상세 페이지 스케일 축소(28 -> 22)에 맞춘다 */
+}
+
+.timeline[data-variant="log"] .title {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-body);
+}
+
+.timeline[data-variant="log"] .meta {
+  font-size: 12px;
+}
+
+/* ---------- 변형: display(About 경력: 큰 세리프 회사명, 기간이 메타) ---------- */
+.timeline[data-variant="display"] {
+  --tl-line: clamp(48px, 5.33vw, 76.8px);
+  --tl-space: 20px;
+}
+
+.timeline[data-variant="display"] .title {
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(40px, 4.44vw, 64px);
+  line-height: var(--tl-line);
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.timeline[data-variant="display"] .meta {
+  font-size: 16px;
+  line-height: 22.4px;
+}
+
+/* ---------- 스크롤 점등(data-scroll): 상세 페이지의 타임라인 섹션. ScrollTimeline 역할은 TimelineSection(클라이언트)이 한다 ----------
+   기본(JS 없음·움직임 줄이기) = 전부 점등한 정적 상태: 채워진 노드 + 글로우 링, 흰 글자, 선 끝까지 채움.
+   JS가 data-armed를 켜면 "꺼진 항목"(data-lit 없음)이 빈 원 + 회색 글자로 돌아가고, 선은 항목의 --seg(0~1)만큼만 채워진다. */
+.timeline[data-scroll] .item::after {
+  transform: scaleY(var(--seg, 1));
+  transition: none; /* 스크롤 위치를 그대로 따라간다(Lenis가 이미 부드럽다) */
+}
+
+.timeline[data-scroll] .node {
+  border-color: var(--timeline-accent);
+  background: var(--timeline-accent);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--timeline-accent) 28%, transparent),
+    0 0 16px 2px color-mix(in srgb, var(--timeline-accent) 55%, transparent);
+}
+
+.timeline[data-scroll] .title {
+  color: var(--fg);
+}
+
+.timeline[data-scroll][data-armed] .item:not([data-lit]) .node {
+  border-color: var(--fg-sub);
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.timeline[data-scroll][data-armed] .item:not([data-lit]) .title {
+  color: var(--fg-muted);
+}

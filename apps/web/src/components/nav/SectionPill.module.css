@@ -1,0 +1,159 @@
+/* 하단 섹션 알약. 재질은 전역 .pill(반투명 회색 + blur 14px, 반경 50px, hover 흰 테두리)을 그대로 쓴다.
+   z-index 70: 메뉴 오버레이(80)·헤더(100) 아래. 메뉴가 열리면 아래 규칙으로 숨긴다. */
+.root {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 70;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* 목록 패널이 알약과 같은 폭 */
+  gap: 8px;
+  width: max-content;
+  min-width: 220px;
+  max-width: calc(100vw - 32px);
+  color: var(--hdr-fg);
+  transition:
+    opacity 0.3s,
+    transform 0.5s var(--ease-out),
+    visibility 0s;
+}
+
+/* 숨김: 메뉴가 열렸거나(html[data-menu]) 푸터와 겹칠 때(data-hidden). 페이드 + 아래로 내려가며 사라지고, 끝난 뒤 포커스·클릭도 막는다 */
+:global(:root[data-menu="open"]) .root,
+.root[data-hidden] {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 12px);
+  pointer-events: none;
+  transition:
+    opacity 0.3s,
+    transform 0.5s var(--ease-out),
+    visibility 0s linear 0.3s;
+}
+
+/* 목록 패널: 알약 위로 펼쳐진다. 알약과 같은 재질, 모서리만 조금 덜 둥글다 */
+.list {
+  order: -1; /* DOM에서는 알약 앞(키보드 순서 무관). 시각적으로도 위 */
+  padding: 6px;
+  border-radius: 24px;
+  background: var(--pill-bg);
+  -webkit-backdrop-filter: blur(var(--pill-blur));
+  backdrop-filter: blur(var(--pill-blur));
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transform-origin: bottom center;
+  transition:
+    opacity 0.25s,
+    transform 0.4s var(--ease-out),
+    visibility 0s linear 0.25s;
+}
+
+.root[data-open] .list {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 0.25s,
+    transform 0.4s var(--ease-out);
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 350;
+  color: var(--fg-muted);
+  transition:
+    color var(--t-fast),
+    background-color var(--t-fast);
+}
+
+.item:hover,
+.item:focus-visible {
+  color: var(--hdr-fg);
+  background: var(--pill-bg);
+  outline: none;
+}
+
+/* 현재 섹션: 글자가 켜지고 번호 옆에 점 대신 굵기가 올라간다 */
+.item[aria-current="location"] {
+  color: var(--hdr-fg);
+  font-weight: 500;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  min-width: 2ch;
+}
+
+/* 알약: 높이 44, 왼쪽 링 + 가운데 `NN — 이름` + 오른쪽 chevron */
+.toggle {
+  height: 44px;
+  padding: 0 16px 0 12px;
+  gap: 12px;
+  justify-content: space-between;
+  color: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 350;
+  white-space: nowrap;
+}
+
+.current {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ring {
+  flex: none;
+  transform: rotate(-90deg); /* 12시 방향에서 시작 */
+}
+
+.ringTrack {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.25;
+  stroke-width: 1.5;
+}
+
+.ringBar {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.chevron {
+  flex: none;
+  transition: transform 0.4s var(--ease-out);
+}
+
+.root[data-open] .chevron {
+  transform: rotate(180deg);
+}
+
+/* JS-off 대체: 본문 맨 위의 앵커 줄. 고정 헤더(54px)에 가리지 않게 위 여백을 둔다 */
+.fallback {
+  padding: 72px var(--gutter) 0;
+}
+
+.fallback ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 14px;
+}
+
+.fallback a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

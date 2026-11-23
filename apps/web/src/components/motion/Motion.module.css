@@ -1,0 +1,23 @@
+/* 등장 모션 문법의 정적 모양(About·Contact·Works 공통). 움직임은 RevealGroup(GSAP)이 transform/opacity로만 건다.
+   JS 없음·움직임 줄이기에서는 이 요소들이 아무 값도 받지 않아 그대로 최종 모습이다. */
+
+/* 제목 한 줄을 가리는 마스크: 줄 안쪽(.lineIn)이 아래에서 올라오며 드러난다.
+   위아래 .12em 여유(padding)를 주고 같은 만큼 음수 마진으로 돌려 놓아, 글자 윗부분·descender가 잘리지 않고 줄 간격은 그대로다 */
+.mask {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.12em;
+  margin-block: -0.12em;
+}
+
+.lineIn {
+  display: block;
+}
+
+/* 섹션 구분선: 1px 가로선이 왼쪽에서 오른쪽으로 그려진다(scaleX 0 -> 1, 기준점은 왼쪽) */
+.rule {
+  display: block;
+  height: 1px;
+  background: var(--line);
+  transform-origin: left center;
+}

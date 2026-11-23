@@ -1,0 +1,485 @@
+/* 프로젝트 상세 본문 블록(가독성 우선 재설계 + 절제 스타일). 값은 모두 globals.css 토큰(D-016).
+   원칙: 한 줄은 본문 폭 720px(한국어 약 40자, 영문 약 75자) 안, 본문 16px/1.8, 모든 블록이 같은 "번호 -> 제목 -> 리드 -> 본문" 문법.
+   글은 언제나 단색 바탕 위(이미지 위에 겹치지 않는다). 무채색 + 얇은 구분선이 기본이고, 색 포인트는 트러블슈팅 "검증" 점 하나뿐이다.
+   타입 스케일(이전 대비 약 15~20% 축소): 블록 제목 30 -> 26px, 리드 19 -> 17px, 카드 제목 20 -> 18px, 지표 숫자 56 -> 44px, 여백 80 -> 64px. */
+
+/* ---------- 블록(목차 한 줄 = 블록 하나) ---------- */
+.block {
+  max-width: 720px;
+  margin-top: 64px;
+  padding-top: 64px;
+  border-top: 1px solid var(--line); /* 블록 사이 구분선: 간격과 함께 항상 같게 */
+  scroll-margin-top: 80px; /* #앵커 이동(JS 없음·움직임 줄이기) 때 고정 헤더에 제목이 가리지 않게. lib/motion의 ANCHOR_OFFSET과 같은 값 */
+}
+
+.block:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* 갤러리 블록은 오른쪽 여백까지 넓게 쓰고, 제목만 본문 폭에 맞춘다 */
+.block[data-wide] {
+  max-width: none;
+}
+.block[data-wide] .head {
+  max-width: 720px;
+}
+
+/* ---------- 블록 머리: 번호·영문 라벨(작게) / 제목(26px) / 리드(17px) ---------- */
+.eyebrow {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 20px;
+  letter-spacing: 0.02em;
+  color: var(--fg-sub);
+}
+
+.eyebrowNo {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.title {
+  margin-top: 10px;
+  font-size: 26px;
+  line-height: 1.35;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.lead {
+  margin-top: 12px;
+  max-width: 680px;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--fg);
+}
+
+.blockBody {
+  margin-top: 32px;
+}
+
+/* ---------- 읽는 글 ---------- */
+.prose {
+  max-width: 680px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--fg-body);
+}
+
+.prose > * + * {
+  margin-top: 1.1em;
+}
+
+/* 소제목: 본문보다 한 단계 크고 밝게, 위 간격을 넓혀 묶음이 보이게 */
+.subhead {
+  font-size: 17px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.prose > * + .subhead {
+  margin-top: 2em;
+}
+
+.prose > .subhead + * {
+  margin-top: 0.5em;
+}
+
+.bullets {
+  padding-left: 1.25em;
+  list-style: disc;
+}
+
+.bullets li + li {
+  margin-top: 0.5em;
+}
+
+.bullets li::marker {
+  color: var(--fg-sub);
+}
+
+/* 원문의 영문 번역: 본문과 섞이지 않게 작게, 왼쪽 선 + EN 표시 */
+.translation {
+  padding: 4px 0 4px 16px;
+  border-left: 2px solid var(--line);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--fg-sub);
+  word-break: normal; /* 영문은 keep-all이 필요 없다 */
+}
+
+.translationTag {
+  display: inline-block;
+  margin-right: 10px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  line-height: 18px;
+  letter-spacing: 0.06em;
+  color: var(--fg-body);
+}
+
+/* 인라인 코드: 고정폭 + 옅은 면. 긴 경로가 좁은 화면 밖으로 밀리지 않게 어디서든 줄을 바꿀 수 있게 한다 */
+.code {
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-small);
+  background: var(--code-bg);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 챕터 이미지(글 아래 한 번) ---------- */
+.figure {
+  margin-top: 32px;
+}
+
+.figureFrame {
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-media);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+/* 챕터 이미지 링크(라이트박스 열기): 칸 모양은 .figureFrame 그대로, 링크라 block + 확대 커서 */
+.zoomLink {
+  display: block;
+  cursor: zoom-in;
+}
+
+.caption {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg-sub);
+}
+
+/* ---------- 조용한 목록(트러블슈팅·설계 결정) ----------
+   카드·색 면·화살표 없이, 항목 위의 얇은 구분선 하나로 나눈다(Metalab 리스트/아코디언 문법).
+   항목 안은 "왼쪽 12px 회색 라벨 | 오른쪽 본문" 행이다. 증상·원인·해결·검증(결정은 채택·기각)이 같은 모양의 행이라 위계가 글자 크기·굵기로만 갈린다. */
+.cards {
+  display: block;
+}
+
+.card {
+  padding: 24px 0;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 80px;
+}
+
+/* 항목 메타(TR 번호 · PR 번호 / 결정 번호): 12px 회색 한 줄. 요소 사이에 가운뎃점 */
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fg-sub);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardMeta > * + *::before {
+  content: "·";
+  margin-right: 8px;
+}
+
+.cardTitle {
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+/* 행 목록: 라벨 칸 96px + 본문. 행 사이는 가장 옅은 구분선 */
+.rows {
+  margin-top: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  column-gap: 24px;
+  padding: 11px 0;
+  border-top: 1px solid var(--surface-line);
+}
+
+.rowLabel {
+  font-size: 12px;
+  line-height: 27px; /* 본문 첫 줄(16px x 1.7)의 글자 높이에 맞춘다 */
+  letter-spacing: 0.02em;
+  color: var(--fg-sub);
+}
+
+/* 검증 행만의 미세한 포인트: 라벨 앞의 6px 점 하나(색에만 기대지 않는다: 글자 "검증"이 의미를 말한다) */
+.row[data-step="result"] .rowLabel::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--accent-ok);
+  vertical-align: 1px;
+}
+
+.rowText {
+  min-width: 0;
+  max-width: 60ch; /* 한 줄 최대 약 60자 */
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--fg-body);
+}
+
+/* 증상은 한 단계 밝게(문제가 먼저 눈에 들어오게). 색이 아니라 밝기로만 구분한다 */
+.row[data-step="problem"] .rowText,
+.row[data-strong] .rowText {
+  color: var(--fg);
+}
+
+/* 결정: 기각한 대안의 이름은 굵게, 그 뒤 이유는 보통 */
+.dcOption {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* 검증 단계에서 수치(Inline numbers)는 굵게만 강조한다(색 없음) */
+.num {
+  font-weight: 600;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 지표: 카드 대신 위 구분선 + 큰 숫자 ---------- */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+}
+
+.metric {
+  padding: 16px 0 20px;
+  border-top: 1px solid var(--line);
+}
+
+.metricValue {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.metricUnit {
+  margin-left: 6px;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--fg-body);
+}
+
+.metricLabel {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg-sub);
+}
+
+/* ---------- 개요 표(히어로 메타): 넓은 화면 4칸 격자, 스택(태그) 칸은 2칸 ---------- */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+
+.fact {
+  padding: 14px 0 16px;
+  border-top: 1px solid var(--line);
+}
+
+.fact[data-wide] {
+  grid-column: span 2;
+}
+
+.fact dt {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--fg-sub);
+}
+
+.fact dd {
+  margin-top: 4px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-body);
+}
+
+/* 작은 태그(개요 표의 스택): 알약 모양 테두리 */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fg-body);
+  white-space: nowrap;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ---------- 갤러리: 2열, 같은 비율(4:3) 썸네일 + 캡션 ---------- */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px var(--gutter);
+}
+
+.shotLink {
+  position: relative; /* next/image(fill)의 이미지가 이 칸을 기준으로 채우게 한다 */
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-media);
+  background: var(--surface);
+  cursor: zoom-in;
+}
+
+.shotImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top; /* 세로로 긴 전체 페이지 캡처는 윗부분(첫 화면)을 보여 준다 */
+}
+
+/* hover 때 살짝 확대: 움직임 줄이기 설정이면 하지 않는다 */
+@media (prefers-reduced-motion: no-preference) {
+  .shotImg {
+    transition: transform 0.6s var(--ease-out);
+  }
+  .shotLink:hover .shotImg {
+    transform: scale(1.02);
+  }
+}
+
+/* ---------- 영상·자리표시 ---------- */
+.video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-media);
+  overflow: hidden;
+}
+
+.video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.placeholderFrame {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-media);
+  overflow: hidden;
+}
+
+/* ---------- 모바일: 한 열, 표·카드 행은 라벨 위 / 내용 아래로 쌓는다 ---------- */
+@media (max-width: 768px) {
+  .block {
+    margin-top: 48px;
+    padding-top: 48px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .lead {
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  .blockBody {
+    margin-top: 24px;
+  }
+
+  .prose {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  /* 조용한 목록: 라벨 칸을 64px로 줄여 "라벨 | 본문" 두 칸을 모바일에서도 유지한다 */
+  .card {
+    padding: 20px 0;
+  }
+
+  .row {
+    grid-template-columns: 56px minmax(0, 1fr);
+    column-gap: 14px;
+  }
+
+  .rowText {
+    font-size: 15px;
+  }
+
+  .cardTitle {
+    font-size: 17px;
+  }
+
+  .metricValue {
+    font-size: 36px;
+  }
+
+  .metricUnit {
+    font-size: 14px;
+  }
+
+  .metricLabel {
+    font-size: 13px;
+  }
+
+  /* 개요 표: "라벨 | 값" 두 칸 행으로 */
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fact,
+  .fact[data-wide] {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+    grid-column: auto;
+    padding: 12px 0;
+  }
+
+  .fact dt {
+    line-height: 24px;
+  }
+
+  .fact dd {
+    margin-top: 0;
+    font-size: 15px;
+  }
+
+  .gallery {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}

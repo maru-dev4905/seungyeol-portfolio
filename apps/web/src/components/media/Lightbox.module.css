@@ -1,0 +1,213 @@
+/* 이미지 라이트박스. 색·반경·곡선은 globals.css 토큰(var(--...))만 쓴다.
+   모션: 열기/닫기 0.35s, 배경은 페이드, 이미지 영역은 페이드 + scale .98 -> 1. 움직임 줄이기는 scale 없이 페이드만. */
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 120; /* 고정 헤더(100)·알약(70) 위, 커서(1000) 아래(CareerDrawer와 같다) */
+}
+
+/* 배경 dim(--scrim 토큰). 클릭하면 닫힌다 */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  /* 뒤 페이지 글자가 캡션 뒤로 비쳐 읽기 어려워서, dim 위에 흐림(blur)만 더한다(색 값은 늘리지 않는다) */
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out-cubic);
+}
+
+/* 대화상자: 화면 전체를 덮는 세로 flex(이미지 영역 + 캡션). 빈 곳 클릭은 JS가 배경 클릭으로 취급해 닫는다 */
+.dialog {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  opacity: 0;
+  transform: scale(0.98);
+  transition:
+    opacity 0.35s var(--ease-out-cubic),
+    transform 0.35s var(--ease-out-cubic);
+}
+
+.root[data-state="open"] .backdrop,
+.root[data-state="open"] .dialog {
+  opacity: 1;
+}
+
+.root[data-state="open"] .dialog {
+  transform: none;
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+/* 이미지 영역: 이미지 + 캡션(약 72px)이 뷰포트 높이의 90% 안에 들어오게 이미지 최대 높이를 정한다 */
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+}
+
+.frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 90vw;
+}
+
+/* 원본 비율 그대로(width/height auto) 가로 90vw·세로 90dvh-72px 안에 통째로 들어온다. 다 받기 전에는 투명 */
+.img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 90vw;
+  max-height: calc(90dvh - 72px);
+  object-fit: contain;
+  border-radius: var(--radius-media);
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out-cubic);
+  user-select: none;
+}
+
+.img[data-loaded] {
+  opacity: 1;
+}
+
+/* 받는 동안 자리표시: 16:10 껍데기가 이미지 칸을 대신한다(받으면 사라진다). 이미지가 겹쳐 놓일 수 있게 가운데 절대 배치 */
+.skeleton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(60vw, 640px);
+  aspect-ratio: 16 / 10;
+  max-height: calc(90dvh - 72px);
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-media);
+  background: var(--surface);
+  animation: lb-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes lb-pulse {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 이전·다음: 화면 왼쪽/오른쪽 가운데(데스크톱). 모바일은 아래쪽 모서리로 옮긴다 */
+.nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  padding: 0;
+  font-size: 18px;
+}
+
+.prev {
+  left: 16px;
+}
+
+.next {
+  right: 16px;
+}
+
+/* 캡션: "n / N" + 설명. 길면 두 줄까지만 보이고 말줄임 */
+.caption {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  max-width: min(90vw, 960px);
+  min-height: 36px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fg-body);
+}
+
+.count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.alt {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+@media (max-width: 768px) {
+  .dialog {
+    padding: 56px 8px 16px; /* 위쪽은 닫기 버튼 자리 */
+  }
+
+  .img {
+    max-height: calc(90dvh - 128px);
+  }
+
+  /* 모바일: 이전·다음을 아래 모서리로(이미지를 가리지 않게). 캡션은 두 버튼 사이 */
+  .nav {
+    top: auto;
+    bottom: 16px;
+    margin-top: 0;
+  }
+
+  .prev {
+    left: 12px;
+  }
+
+  .next {
+    right: 12px;
+  }
+
+  .caption {
+    max-width: calc(100vw - 128px);
+    min-height: 44px;
+    align-items: center;
+    flex-direction: column;
+    gap: 2px;
+    text-align: center;
+  }
+}
+
+/* 움직임 줄이기: scale 없이 페이드만(전역 규칙이 시간을 0.01ms로 줄이므로, 더 구체적인 선택자의 !important로 페이드만 0.25s 되살린다) */
+@media (prefers-reduced-motion: reduce) {
+  .dialog {
+    transform: none;
+  }
+
+  .root .backdrop,
+  .root .dialog {
+    transition-property: opacity !important;
+    transition-duration: 0.25s !important;
+  }
+
+  .skeleton {
+    animation: none !important;
+  }
+}

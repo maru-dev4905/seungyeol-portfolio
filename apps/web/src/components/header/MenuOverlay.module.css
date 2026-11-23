@@ -1,0 +1,545 @@
+/* 메뉴 오버레이: 항상 라이트 면(측정). 색은 --menu-* 토큰. 좌표는 1440x900 측정값이다.
+   z-index 80: 헤더(100) 아래, 페이지 위. */
+/* 메뉴 오버레이(측정 metalab.com 1440x900, 클릭 시각 기준).
+   구조: 흰 면 "프레임" 4조각(위/오른쪽/아래/왼쪽) + 모서리 4개가 사방에서 가운데 "창"(432x740)으로 좁혀 들어오고,
+   창에는 미디어가 보인다. 내용(내비·알약·카드)은 프레임이 닫히는 동안 슬라이드로 들어온다.
+   색은 --menu-* 토큰, 시간·곡선은 아래 --mo-* 변수(측정값). z-index 80: 헤더(100) 아래, 페이지 위. */
+.menu {
+  --pill-border-hover: var(--menu-fg); /* 흰 면 위의 알약 hover 테두리는 검정 */
+  /* 창 크기: 가로 30vw(432), 세로는 화면 높이-160(최대 740). 프레임 조각 크기가 이 값에서 나온다 */
+  --win-x: 35vw;
+  --win-y: 80px;
+  --win-h: min(740px, calc(100svh - 160px));
+  /* 올라오는 덮개(목업 .rise / 형태 .scene)의 폭: 창 hover 미리보기가 cover로 그리는 크기(창 높이 x 16:10) */
+  --rise-w: max(30vw, calc(var(--win-h) * 1.6));
+  /* 열림(측정): 프레임 지연 .23s·.71s, 내용 지연 .47s·.94s, 카드 하나마다 .043s씩 늦게 */
+  --mo-frame-in: 0.71s cubic-bezier(0.72, 0.1, 0.3, 0.84) 0.23s;
+  --mo-slide-in: 0.94s cubic-bezier(0.1, 0, 0.16, 1);
+  /* 닫힘(측정): 내용은 바로 빠르게 나가고(0.8s), 프레임은 0.21s 뒤 0.83s 동안 나간다 */
+  --mo-slide-out: 0.8s cubic-bezier(0.2, 0.7, 0.3, 1);
+  --mo-frame-out: 0.83s cubic-bezier(0.6, 0.23, 0.37, 1) 0.21s;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  color: var(--menu-fg);
+  pointer-events: none; /* 닫힌 동안(그리고 닫히는 동안)에는 뒤 페이지가 클릭을 받는다 */
+  visibility: hidden;
+  /* 닫힘: 프레임이 다 나간 뒤(1.1s)에 숨겨 포커스·클릭이 닿지 않게 한다 */
+  transition: visibility 0s linear 1.1s;
+  overflow: hidden auto;
+  overscroll-behavior: contain; /* 휠이 뒤 페이지로 새지 않게 */
+}
+
+/* 항목을 눌러 이동 중(data-nav): 프레임 조각이 확대 면과 같은 시작·길이·곡선으로 움직인다(lib/transition-timeline.ts의 TL, <html>의 --tl-*) */
+.menu[data-nav] {
+  --mo-frame-out: var(--tl-out-ms) var(--tl-out-ease) var(--tl-out-delay);
+  --mo-frame-in: var(--tl-out-ms) var(--tl-out-ease) var(--tl-out-delay);
+}
+
+/* 로고 -> 홈 커튼(data-curtain): Metalab 실측 시간표(TL.curtain). data-nav보다 뒤에 두어 둘이 같이 켜져도 이쪽이 이긴다 */
+.menu[data-curtain] {
+  --mo-frame-out: var(--tl-curtain-ms) var(--tl-curtain-ease) var(--tl-curtain-delay);
+  --mo-frame-in: var(--tl-curtain-ms) var(--tl-curtain-ease) var(--tl-curtain-delay);
+}
+
+.menu[data-open] {
+  visibility: visible;
+  pointer-events: auto;
+  transition: visibility 0s;
+}
+
+/* ---------- 상세 페이지의 올라오는 목업(측정 metalab.com/work/nike): 목업이 화면 아래에서 올라와 프레임과 같은 진행도로 제자리에 선다.
+   (측정: Metalab은 화면 크기 면이 translateY 900 -> 0으로 올라오고, 진행도가 프레임 조각과 같다 = 같은 곡선·지연 .23s + .71s. 닫힐 때도 프레임과 같이 내려간다 .21s + .83s)
+   그림 상자는 창 hover 미리보기가 cover로 그리는 크기(창 높이 x 16:10)를 화면 가운데에 둔 것이다 -> 올라온 그림과 hover 그림·확대 전환의 시작 그림이 같은 배율이다.
+   (Metalab은 올라오면서 면이 0.9배로 줄어들지만 우리는 그 배율을 맞추려고 줄이지 않는다) ---------- */
+.rise,
+.scene {
+  position: absolute;
+  left: 50%;
+  top: var(--win-y);
+  width: var(--rise-w);
+  height: var(--win-h);
+  border-radius: var(--radius-media);
+  overflow: hidden;
+  /* 닫힌 상태: 상자 윗변이 화면 아래 끝에 닿는 만큼 내려가 있다(화면 밖). 창은 항상 화면 세로 가운데라 가로 중심이 맞는다 */
+  transform: translate(-50%, calc(100svh - var(--win-y)));
+  transition: transform var(--mo-frame-out);
+  will-change: transform;
+}
+
+.menu[data-open] .rise,
+.menu[data-open] .scene {
+  transform: translate(-50%, 0);
+  transition: transform var(--mo-frame-in);
+}
+
+/* 메뉴가 닫혀 있다가 로고로 시작한 커튼(data-bare): 덮개를 올리지 않는다. 옛 페이지가 프레임 조각 구멍으로 그대로 보이다가 조각이 모여 가린다(Metalab 실측) */
+.menu[data-bare] .rise,
+.menu[data-bare] .scene,
+.menu[data-bare][data-open] .rise,
+.menu[data-bare][data-open] .scene {
+  transform: translate(-50%, calc(100svh - var(--win-y)));
+  transition: none;
+}
+
+/* ---------- 프레임: 닫힌 상태에서 화면 밖에 있다가 열리면 제자리(transform 없음)로 ---------- */
+.edge,
+.corner {
+  position: absolute;
+  z-index: 4; /* 덮개(.rise·.scene 0~3)와 가운데 창(.media 2) 위, 내용(5) 아래 */
+  background: var(--menu-bg);
+  transition: transform var(--mo-frame-out);
+  will-change: transform;
+}
+
+.menu[data-open] .edge,
+.menu[data-open] .corner {
+  transform: none;
+  transition: transform var(--mo-frame-in);
+}
+
+.top {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--win-y);
+  transform: translateY(-100%);
+}
+.bottom {
+  left: 0;
+  right: 0;
+  top: calc(var(--win-y) + var(--win-h));
+  bottom: 0;
+  transform: translateY(100%);
+}
+/* 좌우 조각은 화면 절반(50vw) 폭이다(Metalab 실측: 720px). 메뉴가 열린 자리에서는 가운데 창 가장자리(--win-x)까지만 들어와 있고,
+   로고 커튼(data-curtain)에서는 transform 없는 자리(= 화면 가운데에서 맞닿음)까지 더 들어와 화면 전체를 가린다 */
+.left {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 50vw;
+  transform: translateX(-100%);
+}
+.right {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 50vw;
+  transform: translateX(100%);
+}
+
+.menu[data-open] .left {
+  transform: translateX(calc(var(--win-x) - 50vw));
+}
+.menu[data-open] .right {
+  transform: translateX(calc(50vw - var(--win-x)));
+}
+
+.menu[data-curtain][data-open] .left,
+.menu[data-curtain][data-open] .right {
+  transform: none;
+}
+
+/* 창의 둥근 모서리 4개(8x8): 흰 정사각형에서 사분원을 뚫는다. 이웃한 두 조각과 같은 방향·거리로 함께 들어온다 */
+.corner {
+  width: 8px;
+  height: 8px;
+  --off-x: var(--win-x);
+  --off-y: var(--win-y);
+}
+.cornerTL {
+  left: var(--win-x);
+  top: var(--win-y);
+  background: radial-gradient(circle at 100% 100%, transparent 7.5px, var(--menu-bg) 8px);
+  transform: translate(calc(var(--off-x) * -1), calc(var(--off-y) * -1));
+}
+.cornerTR {
+  right: var(--win-x);
+  top: var(--win-y);
+  background: radial-gradient(circle at 0 100%, transparent 7.5px, var(--menu-bg) 8px);
+  transform: translate(var(--off-x), calc(var(--off-y) * -1));
+}
+.cornerBL {
+  left: var(--win-x);
+  top: calc(var(--win-y) + var(--win-h) - 8px);
+  background: radial-gradient(circle at 100% 0, transparent 7.5px, var(--menu-bg) 8px);
+  transform: translate(calc(var(--off-x) * -1), var(--off-y));
+}
+.cornerBR {
+  right: var(--win-x);
+  top: calc(var(--win-y) + var(--win-h) - 8px);
+  background: radial-gradient(circle at 0 0, transparent 7.5px, var(--menu-bg) 8px);
+  transform: translate(var(--off-x), var(--off-y));
+}
+
+/* 모바일용 통짜 흰 면(데스크톱에서는 숨김) */
+.sheet {
+  display: none;
+}
+
+/* 내용은 왼쪽/오른쪽 밖에서 같은 속도로 슬라이드해 들어온다. 닫힐 때는 빠르게 나간다(비대칭) */
+.nav,
+.panel {
+  z-index: 5; /* 프레임 조각(4) 위 */
+  transform: translateX(-150px);
+  transition: transform var(--mo-slide-out);
+}
+
+.menu[data-open] .nav,
+.menu[data-open] .panel {
+  transform: none;
+  transition: transform var(--mo-slide-in) 0.47s;
+}
+
+/* ©연도는 움직이지 않고 서서히 나타난다(측정: 지연 .5s, 1.2s, 거의 선형) */
+.year {
+  opacity: 0;
+  transition: opacity 1.1s linear;
+}
+
+.menu[data-open] .year {
+  opacity: 1;
+  transition: opacity 1.2s cubic-bezier(0.03, 0.04, 0.43, 0.97) 0.5s;
+}
+
+/* ---------- 내비 (측정: x24, 첫 y168, 항목 높이 35 = 24px 줄 + 위아래 5.5px, 세리프 20px) ---------- */
+.nav {
+  position: absolute;
+  left: var(--gutter);
+  top: 168px;
+}
+
+.navItem {
+  display: block;
+  padding: 5.5px 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-align: left;
+  transition: opacity 0.3s;
+}
+
+.navText {
+  position: relative;
+  display: inline-block;
+}
+
+/* 밑줄: 선택된 항목은 항상, hover한 항목은 왼쪽에서 그어진다(측정: translateX -121 -> 0, 약 0.5초) */
+.navText::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease-out);
+}
+
+.navItem[aria-pressed="true"] .navText::after,
+.navItem[aria-current="page"] .navText::after,
+.navItem:hover .navText::after,
+.navItem:focus-visible .navText::after {
+  transform: scaleX(1);
+}
+
+/* 목록 위에 포인터가 있으면 hover하지 않은 항목은 0.3으로 흐려진다(측정 opacity 0.3) */
+.nav ul:hover .navItem:not(:hover) {
+  opacity: 0.3;
+}
+
+.navItem:focus-visible {
+  outline: none; /* 밑줄이 포커스 표시를 대신한다 */
+}
+
+/* ---------- 왼쪽 내용(첫 그룹 라벨 y348, 둘째 그룹 라벨은 첫 그룹 아래 24px, 알약 높이 32, 간격 36. 두 그룹 알약은 같은 크기) ---------- */
+.panel {
+  position: absolute;
+  left: var(--gutter);
+  top: 348px;
+  min-width: 200px;
+  /* 두 그룹 사이 간격. 합계(대표 2개 + 나머지 5개)가 900px 화면 안에 들어가도록 24px로 둔다 */
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.caption {
+  font-size: 12px;
+  line-height: 14.4px;
+  font-weight: 350;
+  color: var(--menu-muted);
+  margin-bottom: 12px; /* 라벨 끝 362 -> 알약 374 */
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px; /* 32px 알약 + 4px = 36px 간격 */
+}
+
+.pillLink {
+  height: 32px;
+  padding: 0 16px;
+  font-size: 16px;
+  line-height: 30px;
+  font-weight: 350;
+  letter-spacing: -0.01em;
+  color: var(--menu-fg);
+  white-space: nowrap;
+}
+
+/* ---------- 가운데 창 (측정: x504 y80, 432x740) ----------
+   창 자체는 투명한 구멍이다: 프레임 4조각이 둘러싼 이 칸으로 지금 페이지가 그대로 보인다(축소 없음, 스크롤 위치 그대로).
+   hover 미리보기만 이 칸 안에 그린다. */
+.media {
+  position: absolute;
+  z-index: 2; /* 안쪽 미리보기(z 1~2)가 이 창 안에서만 겨루게 한다. 기본 덮개(.scene 0) 위, hover 형태(.scene[data-hover] 3) 아래 */
+  left: var(--win-x);
+  top: var(--win-y);
+  width: 30vw;
+  height: var(--win-h);
+  overflow: hidden;
+  border-radius: var(--radius-media);
+}
+
+/* 미리보기 한 장: 올린 항목이 바뀌면 크로스페이드한다(위로 올라오는 애니메이션 대신. opacity만 움직이는 가장 가벼운 방식).
+   상태 4가지:
+   - 상태 없음: 투명. 투명해질 때도 0.3초 전환이 있어, 빠르게 훑어도 장이 갑자기 사라지지 않는다
+   - in   : 맨 위(z 2)에서 0.3초에 나타난다
+   - under: 직전 항목. 새 장 아래(z 1)에 불투명(1)으로 있다 -> 새 장이 다 덮을 때까지 뒤 페이지가 비치지 않는다
+   - out  : 어느 항목에도 올리지 않아 0.3초에 사라진다(아래의 페이지·현재 프로젝트 미리보기가 드러난다)
+   전환은 CSS transition이라 도중에 상태가 바뀌어도 "지금 값"에서 새 목표로 이어진다(애니메이션이 쌓이지 않는다) */
+.preview {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-out-cubic);
+}
+
+/* 가로 프레임 미리보기(media.aspect): 창 폭 가득 + 가운데, 남는 위아래는 미디어 바탕색(--media-base)으로 채운다 */
+.preview[data-wide] {
+  display: grid;
+  place-items: center;
+  background: var(--media-base);
+}
+
+.previewFrame {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-media);
+}
+
+.preview[data-state="in"] {
+  z-index: 2;
+  opacity: 1;
+}
+
+.preview[data-state="under"] {
+  z-index: 1;
+  opacity: 1; /* 막 나타나던 중이었다면 지금 값에서 1까지 이어서 올라간다(툭 튀지 않는다) */
+}
+
+.preview[data-state="out"] {
+  z-index: 1;
+}
+
+/* 셰이더 장면 층(Works·About·Contact 형태, 그리고 /works·/about 등에서 연 메뉴의 기본 장면): 위 .rise와 같은 상자가 아래에서 올라온다. 캔버스 하나라 장면이 쌓이지 않고 형태만 섞인다.
+   층 순서(z): 기본 장면 0 < 가운데 창(.media 2: 프로젝트 미리보기 안에서 under/out 1 < in 2) < hover 장면 3 < 프레임 조각 4 < 내용 5.
+   data-on이 없으면(홈·상세의 기본) 투명이라 아래의 페이지 구멍/현재 프로젝트 목업이 보인다 */
+.scene {
+  z-index: 0;
+  background: var(--media-base);
+  opacity: 0;
+}
+
+.menu .scene {
+  /* 올라오는 움직임(transform)은 위 공통 규칙이 정하고, 보였다 사라지는 것(opacity)만 여기서 더한다 */
+  transition:
+    transform var(--mo-frame-out),
+    opacity 0.3s var(--ease-out-cubic);
+}
+
+.menu[data-open] .scene {
+  transition:
+    transform var(--mo-frame-in),
+    opacity 0.3s var(--ease-out-cubic);
+}
+
+.menu .scene[data-on] {
+  opacity: 1;
+}
+
+.menu .scene[data-hover] {
+  z-index: 3;
+}
+
+.sceneCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Latest 카드 (측정: x1191 y135 폭 225, 배경 rgb(237,241,245), radius 8, padding 12, 카드 사이 4px) ---------- */
+.cards {
+  position: absolute;
+  z-index: 5;
+  right: var(--gutter);
+  top: 135px;
+  width: 225px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card {
+  padding: 12px;
+  border-radius: var(--radius-media);
+  background: var(--card-bg);
+  /* 닫혀 있을 땐 오른쪽 300px 밖(측정: x 1491 <-> 1191). 닫힐 때는 한꺼번에 나간다 */
+  transform: translateX(300px);
+  transition: transform 0.9s cubic-bezier(0.25, 0.8, 0.4, 1);
+}
+
+/* 열릴 때: 카드마다 0.043초씩 늦게 시작(측정: 첫 카드 .47s ~ 마지막 .64s) */
+.menu[data-open] .card {
+  transform: none;
+  transition: transform 0.95s cubic-bezier(0.1, 0, 0.16, 1) calc(0.47s + var(--i) * 0.043s);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardTitle {
+  font-size: 12px;
+  line-height: 14.4px;
+  font-weight: 350;
+  letter-spacing: -0.01em;
+}
+
+.cardClose {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: -2px;
+  color: var(--menu-muted);
+}
+
+.cardMedia {
+  height: 105px; /* 측정: 199x105 */
+  margin-top: 12px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cardRow {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.cardThumb {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cardBody {
+  font-size: 12px;
+  line-height: 14.4px;
+  font-weight: 350;
+  letter-spacing: -0.01em;
+  color: var(--card-fg-muted);
+}
+
+/* ---------- ©연도 (측정: x24 y854, 16px) ---------- */
+.year {
+  position: absolute;
+  z-index: 5;
+  left: var(--gutter);
+  bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  /* 모바일: 가운데 미디어·카드·프레임 조각은 없애고, 통짜 흰 면이 페이드로 나타난다. 내비 + 내용만 쌓는다 */
+  .media,
+  .cards,
+  .rise,
+  .scene,
+  .edge,
+  .corner {
+    display: none;
+  }
+
+  .sheet {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: var(--menu-bg);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .menu[data-open] .sheet {
+    opacity: 1;
+  }
+
+  .nav,
+  .panel {
+    transform: none;
+  }
+
+  .nav {
+    left: 16px;
+    top: 104px;
+  }
+
+  .panel {
+    left: 16px;
+  }
+
+  .year {
+    left: 16px;
+  }
+}
+
+/* 커튼 전환 중에는 프레임만 움직인다: 내용(내비·알약·카드·©)은 슬라이드로 들어오지 않고 숨어 있고, 클릭도 받지 않는다.
+   메뉴가 열려 있다가 시작했으면 내용이 0.15초에 사라지고, 닫혀 있다가 시작했으면(data-bare) 처음부터 숨어 있다 */
+.menu[data-curtain] {
+  pointer-events: none;
+}
+
+.menu[data-curtain] .nav,
+.menu[data-curtain] .panel,
+.menu[data-curtain] .cards,
+.menu[data-curtain] .year {
+  opacity: 0;
+  transition: opacity 0.15s linear;
+}
+
+.menu[data-curtain][data-bare] .nav,
+.menu[data-curtain][data-bare] .panel,
+.menu[data-curtain][data-bare] .cards,
+.menu[data-curtain][data-bare] .year {
+  transition: none;
+}
+
+/* 움직임 줄이기: 전역 규칙이 시간을 거의 0으로 줄이므로, 지연도 없애 바로 나타나고 바로 사라지게 한다 */
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menu * {
+    transition-delay: 0s !important;
+  }
+}

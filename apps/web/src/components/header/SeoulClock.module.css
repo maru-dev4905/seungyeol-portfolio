@@ -1,0 +1,44 @@
+.clock {
+  --row: 14.4px; /* 12px 글자의 줄 높이(측정) */
+  font-size: 12px;
+  line-height: var(--row);
+  letter-spacing: -0.01em;
+  font-weight: 350;
+  white-space: nowrap;
+  min-width: 64px; /* 시각이 채워지기 전에도 자리를 잡아 옆 버튼이 밀리지 않게 한다 */
+  text-align: right;
+  font-variant-numeric: tabular-nums; /* 숫자 폭을 같게: 칸이 바뀌어도 시계 폭이 출렁이지 않는다 */
+}
+
+.line {
+  height: var(--row);
+}
+
+/* 칸: 한 줄 높이의 창. 롤링 중에는 안쪽 기둥이 창 밖으로 나가며 잘린다 */
+.cell {
+  display: inline-block;
+  height: var(--row);
+  overflow: hidden;
+  vertical-align: top;
+}
+
+/* 롤링: 두 줄짜리 기둥을 한 줄(= 50%)만큼 올린다. 옛 값은 위로 나가고 새 값이 아래에서 올라온다 */
+.column {
+  display: flex;
+  flex-direction: column;
+  animation: roll 0.5s var(--ease-out) both;
+}
+
+.row {
+  display: block;
+  height: var(--row);
+}
+
+@keyframes roll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}

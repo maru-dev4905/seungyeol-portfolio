@@ -1,0 +1,17 @@
+.main {
+  height: 100svh;
+}
+
+/* JS 없는 환경 전용 안내 영역(noscript 안에서만 렌더된다) */
+.fallback {
+  padding: 48px var(--gutter);
+  background: var(--bg);
+  display: grid;
+  gap: 12px;
+}
+
+.fallback h2 {
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: 32px;
+}

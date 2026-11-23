@@ -1,0 +1,250 @@
+/* 프로젝트 상세 페이지(가독성 우선 재설계). 순검정 바탕, 값은 globals.css 토큰(D-016).
+   본문 720px(중앙). 섹션 내비는 화면 아래 가운데 알약(SectionPill). 1100px보다 좁으면 한 열. */
+.main {
+  min-height: 100svh;
+}
+
+/* ---------- 첫 화면: 이름 -> 한국어 제목 -> 요약 -> 개요 표 ---------- */
+.hero {
+  padding: 132px var(--gutter) 48px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(56px, 7vw, 100px); /* 120 -> 100px(약 -17%) */
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+}
+
+/* 한국어 한 줄 제목: 이 프로젝트가 무엇인지 한 문장. 선언문처럼 거대하지 않게 28px */
+.heroTitle {
+  margin-top: 22px;
+  max-width: 760px;
+  font-size: 24px;
+  line-height: 1.45;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.summary {
+  margin-top: 14px;
+  max-width: 680px;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--fg-body);
+}
+
+.meta {
+  margin-top: 44px;
+}
+
+/* 바깥 링크: 밑줄이 있는 글자 링크(알약은 푸터에서 쓴다) */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.link {
+  font-size: 16px;
+  line-height: 1.6;
+  text-decoration: underline;
+  text-decoration-color: var(--fg-sub);
+  text-underline-offset: 4px;
+  transition: text-decoration-color var(--t-fast);
+}
+
+.link:hover {
+  text-decoration-color: var(--fg);
+}
+
+/* ---------- 풀블리드 히어로 미디어 (측정 1440x838). 홈에서 이어지는 전환의 도착 칸이라 비율을 유지한다 ---------- */
+.bleed {
+  width: 100%;
+  aspect-ratio: 1440 / 838;
+}
+
+/* ---------- 본문: [빈 칸 | 본문 720 | 남는 폭] 3칸. 본문 칸이 가운데 근처에 오도록 양옆을 같은 비율(1fr)로 나눈다.
+   양옆 여백은 기본 거터(--gutter)뿐이다(우측 세로 내비를 없애고 하단 알약으로 되돌렸다) ---------- */
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 720px) minmax(0, 1fr);
+  column-gap: 64px;
+  padding: 0 var(--gutter);
+  margin-top: 96px;
+}
+
+/* 본문 칸은 오른쪽 남는 폭까지 걸쳐 둔다: 보통 블록은 720px에서 멈추고 갤러리 블록만 넓게 쓴다(Section.module.css) */
+.content {
+  grid-column: 2 / 4;
+  min-width: 0;
+}
+
+/* ---------- 다음 프로젝트: 본문 폭 가로 카드 ---------- */
+.next {
+  max-width: 720px;
+  margin-top: 96px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+
+.nextLink {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+}
+
+.nextMedia {
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-media);
+  overflow: hidden;
+}
+
+.nextText {
+  display: grid;
+  gap: 6px;
+}
+
+.nextLabel {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--fg-sub);
+}
+
+.nextName {
+  font-family: var(--font-display);
+  font-size: 32px; /* 40 -> 32px */
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.nextDesc {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-body);
+}
+
+/* ---------- 맨 아래 (측정: 88px 세리프 제목 + 32px 줄 높이 링크) ---------- */
+.footer {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  padding: 160px var(--gutter) 24px;
+  row-gap: 96px;
+}
+
+.footerTitle {
+  grid-column: 1 / 7;
+  font-family: var(--font-display);
+  font-weight: 240;
+  font-size: clamp(56px, 6.11vw, 88px);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+
+.footerLinks {
+  grid-column: 9 / 13;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.footerPill {
+  height: 32px;
+  padding: 0 16px;
+  line-height: 30px;
+  font-weight: 350;
+}
+
+.footerNote {
+  grid-column: 1 / -1;
+  color: var(--fg-sub);
+  font-size: 12px;
+  line-height: 14.4px;
+}
+
+.skeleton {
+  height: 100svh;
+}
+
+/* ---------- 중간 폭(목차를 숨기는 구간): 한 열, 본문을 가운데로 ---------- */
+@media (max-width: 1099px) {
+  .body {
+    display: block;
+    max-width: calc(720px + 2 * var(--gutter));
+    margin: 96px auto 0;
+  }
+
+}
+
+/* ---------- 모바일 ---------- */
+@media (max-width: 768px) {
+  .hero {
+    padding: 112px 20px 32px;
+  }
+
+  /* 원인: 이름이 긴 프로젝트(DaedongMobility 15자, Samwhapaper 11자)가 고정 크기면 390 화면 밖으로 글자가 넘쳐 가로 스크롤이 생겼다.
+     화면 폭에 비례(11vw)하되 64px을 넘지 않게 하고, 그래도 넘치면 줄바꿈한다. */
+  .title {
+    font-size: min(52px, 10vw);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .heroTitle {
+    margin-top: 16px;
+    font-size: 19px;
+  }
+
+  .summary {
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .meta {
+    margin-top: 36px;
+  }
+
+  .bleed {
+    aspect-ratio: 390 / 675;
+  }
+
+  .body {
+    padding: 0 20px;
+    margin-top: 48px;
+  }
+
+  .next {
+    margin-top: 64px;
+  }
+
+  .nextLink {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .nextName {
+    font-size: 26px;
+  }
+
+  .footer {
+    display: block;
+    padding: 120px 20px 24px;
+  }
+
+  .footerLinks {
+    margin-top: 40px;
+  }
+
+  .footerNote {
+    margin-top: 40px;
+  }
+}
