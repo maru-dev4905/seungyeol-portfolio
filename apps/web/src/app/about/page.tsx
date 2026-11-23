@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { AboutHero } from "@/components/about/AboutHero";
 import { ProfileBlock } from "@/components/about/ProfileBlock";
@@ -83,6 +84,12 @@ export default function AboutPage() {
                   <Inline text={t} />
                 </p>
               ))}
+              {/* AI 협업 방식 페이지(/workflow)로 가는 작은 링크. 일반 링크라 PageFade가 전환을 맡는다 */}
+              <p data-r="body">
+                <Link className={`pill ${styles.footerPill}`} href="/workflow">
+                  How I work with AI →
+                </Link>
+              </p>
             </div>
           </RevealGroup>
         </div>

@@ -36,6 +36,9 @@ export default async function Home() {
           <p>
             <Link href="/library">Library</Link>
           </p>
+          <p>
+            <Link href="/workflow">Workflow — How I work with AI</Link>
+          </p>
           <h2>{siteCopy.menu.contact}</h2>
           <p>
             <Link href="/contact">Contact</Link>
