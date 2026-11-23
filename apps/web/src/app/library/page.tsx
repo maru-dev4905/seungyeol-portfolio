@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * /library: 쓰면서 모아 두는 라이브러리·플러그인 목록(Works와 같은 Metalab 문법: 라벨 -> 세리프 제목 -> 필터 알약 -> 구분선 행).
+ * /library: 쓰면서 모아 두는 라이브러리·플러그인 목록(라벨 -> 세리프 제목 -> 필터 알약 -> 카드 그리드).
  * 데이터는 getLibraryItems() 하나로만 읽는다(지금은 lib/library.ts의 검증된 배열, 관리자 단계에서는 DB로 바뀔 자리).
  * 필터는 URL 쿼리(?c=&s=)를 쓰는 클라이언트 컴포넌트라 Suspense 안에 둔다. 서버 HTML(= JS 없음)에는 fallback의 "전체 목록"이 들어 있고 필터 알약은 없다.
  */
@@ -29,7 +29,7 @@ export default async function LibraryPage() {
         </p>
         <Lines as="h1" className={styles.title} lines={["Library"]} />
         <p className={styles.intro} data-r="body">
-          쓰면서 모아 두는 도구들
+          Libraries and plugins I have used, plan to try, or keep an eye on.
         </p>
       </RevealGroup>
 

@@ -11,7 +11,7 @@ import { LibraryRows } from "./LibraryRows";
 import styles from "./Library.module.css";
 
 /**
- * 필터(분류·상태) + 개수 + 행 목록. 필터의 진실의 원천은 URL 쿼리(?c=분류&s=상태)다:
+ * 필터(분류·상태) + 개수 + 카드 그리드. 필터의 진실의 원천은 URL 쿼리(?c=분류&s=상태)다:
  * 알약을 누르면 history.pushState로 쿼리만 바꾸고(Next가 useSearchParams에 반영한다), 화면은 항상 쿼리에서 계산한다.
  * -> 새로고침·뒤로 가기·링크 공유에서 같은 화면이 나온다. 서버 요청 없이 전환되고, 알 수 없는 값은 "All"로 본다.
  * 이 컴포넌트는 Suspense 안에서만 쓴다(useSearchParams 때문). JS가 꺼져 있으면 fallback의 전체 목록이 그대로 보인다.
@@ -23,6 +23,9 @@ export function LibraryBrowser({ items }: { items: readonly LibraryItem[] }) {
   const s = STATUSES.find((v) => v === params.get("s")) ?? null;
 
   const shown = items.filter((it) => (!c || it.category === c) && (!s || it.status === s));
+  // 분류 알약은 항목이 하나라도 있는 분류만 보여 준다(빈 알약을 눌러 빈 화면이 나오는 것을 막는다). 스키마 enum 순서 유지.
+  // 단, URL로 들어온 현재 분류(c)는 항상 포함해 선택 상태가 사라지지 않게 한다
+  const categories = CATEGORIES.filter((v) => v === c || items.some((it) => it.category === v));
   const listRef = useRef<HTMLDivElement>(null);
 
   // 알약 클릭: 현재 쿼리에서 해당 키만 바꾼다(null = All이라 키를 지운다). 이벤트 안에서는 window.location을 읽는다
@@ -34,25 +37,25 @@ export function LibraryBrowser({ items }: { items: readonly LibraryItem[] }) {
     window.history.pushState(null, "", qs ? `?${qs}` : window.location.pathname);
   };
 
-  // 처음 그릴 때와 필터가 바뀔 때 행이 순서대로 다시 등장한다(과하지 않게: 간격은 공통 스태거의 절반, 길이도 짧게).
+  // 처음 그릴 때와 필터가 바뀔 때 카드가 순서대로 다시 등장한다(과하지 않게: 간격은 공통 스태거의 절반, 길이도 짧게).
   // 움직임 줄이기에서는 아무것도 하지 않는다(정적). transform/opacity만 쓴다
   useGSAP(
     () => {
       const root = listRef.current;
       if (!root || prefersReducedMotion()) return;
-      const rows = Array.from(root.querySelectorAll<HTMLElement>("[data-row]"));
-      if (!rows.length) return;
-      gsap.set(rows, { opacity: 0, y: MOTION.distance / 2 });
+      const cards = Array.from(root.querySelectorAll<HTMLElement>("[data-row]"));
+      if (!cards.length) return;
+      gsap.set(cards, { opacity: 0, y: MOTION.distance / 2 });
       return whenTransitionIdle(() => {
-        gsap.to(rows, {
+        gsap.to(cards, {
           opacity: 1,
           y: 0,
           duration: MOTION.enter * 0.6,
           ease: MOTION.ease,
           stagger: MOTION.stagger / 2,
-          // 끝나면 인라인 값을 지워 행 hover 전환과 겹치지 않게 한다
+          // 끝나면 인라인 값을 지워 카드 hover 전환과 겹치지 않게 한다
           onComplete: () => {
-            gsap.set(rows, { clearProps: "opacity,transform" });
+            gsap.set(cards, { clearProps: "opacity,transform" });
           },
         });
       });
@@ -63,7 +66,7 @@ export function LibraryBrowser({ items }: { items: readonly LibraryItem[] }) {
   return (
     <>
       <nav className={styles.filters} aria-label="Filter library">
-        <FilterGroup<LibraryCategory> label="Category" value={c} options={CATEGORIES} labels={CATEGORY_LABELS} onPick={(v) => setParam("c", v)} />
+        <FilterGroup<LibraryCategory> label="Category" value={c} options={categories} labels={CATEGORY_LABELS} onPick={(v) => setParam("c", v)} />
         <FilterGroup<LibraryStatus> label="Status" value={s} options={STATUSES} labels={STATUS_LABELS} onPick={(v) => setParam("s", v)} />
       </nav>
 
@@ -77,8 +80,8 @@ export function LibraryBrowser({ items }: { items: readonly LibraryItem[] }) {
         ) : (
           // 빈 상태: 해당 조건의 항목이 아직 없다(예: 써볼 예정). 사이트 주인이 채우는 영역이라 그대로 알려 주고 초기화 길을 둔다
           <div className={styles.empty}>
-            <p>아직 없음</p>
-            <p className={styles.emptySub}>이 조건에 맞는 항목을 아직 모으지 않았습니다.</p>
+            <p>Nothing here yet</p>
+            <p className={styles.emptySub}>No items match these filters yet.</p>
             <button
               type="button"
               className={`pill ${styles.chip}`}
@@ -86,7 +89,7 @@ export function LibraryBrowser({ items }: { items: readonly LibraryItem[] }) {
                 window.history.pushState(null, "", window.location.pathname);
               }}
             >
-              필터 초기화
+              Reset filters
             </button>
           </div>
         )}

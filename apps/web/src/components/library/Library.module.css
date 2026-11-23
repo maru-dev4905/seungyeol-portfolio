@@ -1,50 +1,52 @@
-/* Library 페이지. Works 페이지(Works.module.css)와 같은 문법: 제목 -> 필터 알약 -> 구분선 행.
+/* Library 페이지. 제목 -> 필터 알약 -> 컴팩트 카드 그리드.
    색·반경·글꼴은 globals.css 토큰(var(--...))만 쓴다(D-016). */
 .page {
   min-height: 100svh;
-  padding-bottom: 160px;
+  padding-bottom: 96px;
 }
 
 /* ---------- 머리글 ---------- */
 .hero {
-  padding: 121px var(--gutter) 0;
+  padding: 96px var(--gutter) 0;
 }
 
 .label {
   font-size: 12px;
   line-height: 14.4px;
   color: var(--fg-muted);
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
-/* 제목은 Works보다 작게(최대 64px) */
+/* 제목은 작게(최대 44px) */
 .title {
   font-family: var(--font-display);
   font-weight: 240;
-  font-size: clamp(40px, 4.6vw, 64px);
+  font-size: clamp(32px, 3.2vw, 44px);
   line-height: 1.1;
   letter-spacing: -0.02em;
   font-optical-sizing: auto;
 }
 
 .intro {
-  margin-top: 16px;
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 22px;
   color: var(--fg-muted);
 }
 
-/* ---------- 필터 (Works 필터 문법: 라벨 16px + 알약 높이 24) ---------- */
+/* ---------- 필터 (라벨 13px + 알약 높이 28) ---------- */
 .filters,
 .skeleton {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 48px var(--gutter) 24px;
+  padding: 32px var(--gutter) 12px;
 }
 
 /* 필터가 hydration 뒤에 나타나도 목록이 밀리지 않게 fallback이 같은 높이를 미리 잡아 둔다 */
 .skeleton {
   visibility: hidden;
-  height: 144px;
+  height: 100px;
 }
 
 .group {
@@ -54,9 +56,9 @@
 }
 
 .filterLabel {
-  min-width: 72px;
-  font-size: 16px;
-  line-height: 22.4px;
+  min-width: 64px;
+  font-size: 13px;
+  line-height: 18px;
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
@@ -68,81 +70,118 @@
 }
 
 .chip {
-  height: 24px;
-  padding: 0 16px;
-  font-size: 16px;
-  line-height: 22px; /* 1px 테두리 2px을 빼서 높이를 24px로 맞춘다 */
+  height: 28px;
+  padding: 0 12px;
+  font-size: 13px;
+  line-height: 26px; /* 1px 테두리 2px을 빼서 높이를 28px로 맞춘다 */
   font-weight: 400;
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
 .count {
-  padding: 0 var(--gutter) 16px;
+  padding: 0 var(--gutter) 12px;
+  font-size: 12px;
+  line-height: 16px;
   color: var(--fg-muted);
 }
 
-/* ---------- 행 ---------- */
-.rows {
-  border-top: 1px solid var(--line-row);
-}
-
-.row {
-  position: relative;
+/* ---------- 카드 그리드 ----------
+   카테고리 필터가 있으므로 그룹 헤더 없이 단일 그리드(상태 -> 이름 정렬)로 둔다: 13장이 한 화면에 들어오고 시선이 한 번에 훑는다 */
+.grid {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 5fr) minmax(0, 2fr) minmax(0, 2fr) 24px;
-  column-gap: 16px;
-  align-items: baseline;
-  padding: 20px var(--gutter);
-  border-bottom: 1px solid var(--line-row);
-  transition: background-color 0.4s;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 var(--gutter);
 }
 
-/* 행 전체가 링크라 hover/포커스에 배경이 켜진다(About 경력 원장·Works 행과 같은 규칙) */
-.row:hover,
-.row:focus-within {
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 112px;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--line-row);
+  border-radius: var(--radius-media); /* 8px */
+  background: transparent;
+  transition:
+    border-color 0.3s,
+    background-color 0.3s;
+}
+
+/* 카드 전체가 링크라 hover/포커스에 테두리와 면이 살짝 켜진다 */
+.card:hover,
+.card:focus-within {
+  border-color: var(--line);
   background-color: var(--row-hover);
 }
 
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .name {
-  font-size: 20px;
-  line-height: 26px;
+  min-width: 0;
+  font-size: 16px;
+  line-height: 22px;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 
-/* 이름 링크의 ::after가 행 전체를 덮는다 */
-.rowLink::after {
+/* 이름 링크의 ::after가 카드 전체를 덮는다 */
+.cardLink::after {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
 }
 
-.rowLink:focus-visible {
-  outline: none; /* 행 배경이 포커스 표시를 대신한다 */
+.cardLink:focus-visible {
+  outline: none; /* 카드 테두리·배경이 포커스 표시를 대신한다 */
 }
 
+.card:focus-within {
+  border-color: var(--pill-border-hover);
+}
+
+/* 한 줄 설명: 회색, 최대 2줄까지 보이고 넘치면 말줄임 */
 .desc {
-  font-size: 16px;
-  line-height: 22.4px;
+  flex: 1;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--fg-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
-.note {
-  margin-top: 4px;
-  font-size: 14px;
-  line-height: 19.6px;
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  line-height: 16px;
   color: var(--fg-muted);
 }
 
 .cat {
-  color: var(--fg-muted);
+  letter-spacing: 0.02em;
 }
 
 /* 상태 배지: 점 + 글자. 색은 토큰 두 가지(--fg / --fg-muted)만 쓴다 */
 .status {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex: none;
+  font-size: 11px;
+  line-height: 16px;
 }
 
 .dot {
@@ -162,26 +201,16 @@
   color: var(--fg-muted);
 }
 
-/* 화살표: 행 hover 때만 오른쪽 위로 살짝 이동(클릭 가능한 행의 단서) */
+/* 화살표: 카드 hover 때만 오른쪽 위로 살짝 이동(클릭 가능한 카드의 단서) */
 .arrow {
-  justify-self: end;
-  color: var(--fg-muted);
+  font-size: 12px;
   transition: transform 0.3s var(--ease-out), color 0.3s;
 }
 
-.row:hover .arrow,
-.row:focus-within .arrow {
+.card:hover .arrow,
+.card:focus-within .arrow {
   color: var(--fg);
-  transform: translate(3px, -3px);
-}
-
-/* 행 하단: 이 포트폴리오·경력에서 실제로 쓴 곳 */
-.usedIn {
-  grid-column: 1 / -1;
-  margin-top: 8px;
-  font-size: 12px;
-  line-height: 14.4px;
-  color: var(--fg-muted);
+  transform: translate(2px, -2px);
 }
 
 /* ---------- 빈 상태 ---------- */
@@ -189,46 +218,53 @@
   display: grid;
   justify-items: start;
   gap: 12px;
-  padding: 48px var(--gutter) 0;
-  border-top: 1px solid var(--line-row);
+  padding: 24px var(--gutter) 0;
 }
 
 .empty > p:first-child {
   font-family: var(--font-display);
   font-weight: 240;
-  font-size: 32px;
+  font-size: 24px;
   line-height: 1.1;
 }
 
 .emptySub {
+  font-size: 14px;
   color: var(--fg-muted);
 }
 
-/* ---------- 모바일 (390): 2줄 행. 1줄 = 이름 | 상태 | 화살표, 2줄 = 한 줄 설명 | 분류 ---------- */
+/* ---------- 반응형: 태블릿 2~3열, 모바일 1열 ---------- */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
   .hero {
-    padding: 104px 16px 0;
+    padding: 96px 16px 0;
   }
 
   .filters,
   .skeleton {
-    padding: 40px 16px 24px;
+    padding: 28px 16px 16px;
   }
 
   .skeleton {
-    height: 168px;
+    height: 144px;
   }
 
   /* 필터 한 줄: 라벨 위, 알약은 가로로 밀어서 본다(Works 모바일과 같다) */
   .group {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-  }
-
-  .filterLabel {
-    font-size: 14px;
-    line-height: 19.6px;
+    gap: 6px;
   }
 
   .chips {
@@ -240,50 +276,23 @@
 
   .chip {
     flex: none;
-    height: 32px;
-    line-height: 30px;
   }
 
   .count,
-  .empty {
+  .empty,
+  .grid {
     padding-left: 16px;
     padding-right: 16px;
   }
+}
 
-  .row {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    grid-template-areas:
-      "name status arrow"
-      "desc cat cat";
-    column-gap: 12px;
-    row-gap: 4px;
-    padding: 20px 16px;
-    align-items: baseline;
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
   }
 
-  .name {
-    grid-area: name;
-  }
-
-  .status {
-    grid-area: status;
-    font-size: 14px;
-  }
-
-  .arrow {
-    grid-area: arrow;
-  }
-
-  .desc {
-    grid-area: desc;
-    font-size: 14px;
-    line-height: 19.6px;
-  }
-
-  .cat {
-    grid-area: cat;
-    justify-self: end; /* 2줄째 오른쪽 끝(상태·화살표 칸 아래) */
-    font-size: 14px;
-    white-space: nowrap;
+  .card {
+    min-height: 0;
   }
 }
